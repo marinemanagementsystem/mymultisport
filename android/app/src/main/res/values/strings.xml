@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MyMultiSport</string>
+    <string name="title_activity_main">MyMultiSport</string>
+    <string name="package_name">com.marinemanagementsystem.mymultisport</string>
+    <string name="custom_url_scheme">com.marinemanagementsystem.mymultisport</string>
+</resources>

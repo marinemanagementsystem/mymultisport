@@ -1,0 +1,8 @@
+{
+  "name": "My Multisport Gym Finder",
+  "description": "Find official MultiSport Turkey facilities, enrich them with cached Google Maps ratings, and filter by rating, reviews, activity, city, district, and distance.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}

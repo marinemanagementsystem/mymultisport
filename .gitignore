@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+functions/node_modules/
+
+# Build output
+dist/
+.firebase/
+android/**/build/
+android/.gradle/
+*.apk
+*.aab
+
+# Local environment and machine state
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/
+.vscode/
+android/local.properties
+
+# Logs and emulator output
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+*.log
