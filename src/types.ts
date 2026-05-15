@@ -52,6 +52,7 @@ export interface FacilityResult {
   facility: BenefitFacility;
   rating?: GoogleRatingMatch;
   distanceKm?: number;
+  userState?: UserFacilityState;
 }
 
 export interface UserLocation {
@@ -59,15 +60,33 @@ export interface UserLocation {
   lng: number;
 }
 
+export type FacilityPersonalKey = 'favorite' | 'wantToGo' | 'visited';
+export type PersonalFilter = '' | FacilityPersonalKey | 'noted';
+
+export interface UserFacilityState {
+  facilityId: string;
+  favorite: boolean;
+  wantToGo: boolean;
+  visited: boolean;
+  note: string;
+  updatedAt: string;
+}
+
 export interface FilterState {
   query: string;
   city: string;
   district: string;
   activity: string;
-  sort: 'distance' | 'rating_desc' | 'reviews_desc' | 'az';
+  sort: 'recommended' | 'distance' | 'rating_desc' | 'reviews_desc' | 'az';
   minRating: number;
   minReviews: number;
   radiusKm: number;
+  card: string;
+  amenity: string;
+  personal: PersonalFilter;
+  hasPhoto: boolean;
+  activeOnly: boolean;
+  internationalOnly: boolean;
 }
 
 export interface FacilityStats {
@@ -75,4 +94,30 @@ export interface FacilityStats {
   shown: number;
   matched: number;
   pending: number;
+  favorites: number;
+  wantToGo: number;
+  visited: number;
+}
+
+export interface FacilityChangeItem {
+  id: string;
+  name: string;
+  city: string;
+  cityDistrict: string;
+  cards: string[];
+  activities: string[];
+}
+
+export interface FacilityUpdatedChange extends FacilityChangeItem {
+  changedFields: string[];
+}
+
+export interface FacilityChangeSummary {
+  generatedAt: string;
+  sourceUrl: string;
+  previousCount: number;
+  currentCount: number;
+  newFacilities: FacilityChangeItem[];
+  removedFacilities: FacilityChangeItem[];
+  updatedFacilities: FacilityUpdatedChange[];
 }

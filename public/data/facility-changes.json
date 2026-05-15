@@ -1,0 +1,227 @@
+{
+  "generatedAt": "2026-05-15T06:11:17.153Z",
+  "sourceUrl": "https://benefitsystems.com.tr/facilities-tr.json",
+  "previousCount": 4176,
+  "currentCount": 4174,
+  "newFacilities": [
+    {
+      "id": "5691TR",
+      "name": "Gorilbey Gym Botanik",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "660TR",
+      "name": "Gorilbey Gym Tunalı Esat",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Boks",
+        "Fitness & Gym",
+        "Kick Box",
+        "Mat Pilates",
+        "Yoga"
+      ]
+    }
+  ],
+  "removedFacilities": [
+    {
+      "id": "3531TR",
+      "name": "Fit Point Spor Salonu",
+      "city": "İstanbul",
+      "cityDistrict": "Zeytinburnu",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "4239TR",
+      "name": "Konum Poligon",
+      "city": "İstanbul",
+      "cityDistrict": "Maltepe",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Airsoft"
+      ]
+    },
+    {
+      "id": "2361TR",
+      "name": "OverDose Fitness",
+      "city": "Denizli",
+      "cityDistrict": "Merkezefendi",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Boks",
+        "Crossfit",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "1095TR",
+      "name": "Tekno Okçuluk Spor Kulübü",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Okçuluk"
+      ]
+    }
+  ],
+  "updatedFacilities": [
+    {
+      "id": "3090TR",
+      "name": "B&T Sports",
+      "city": "Ankara",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
+      "id": "2933TR",
+      "name": "GYMLENİX Spor Salonu",
+      "city": "İstanbul",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ],
+      "changedFields": [
+        "district",
+        "international"
+      ]
+    },
+    {
+      "id": "5479TR",
+      "name": "Heal Inn Pilates",
+      "city": "Ankara",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
+      "id": "5531TR",
+      "name": "İstanbul Surf House",
+      "city": "İstanbul",
+      "cityDistrict": "",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Deniz Bisikleti",
+        "Kano",
+        "Paddle Board"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
+      "id": "824TR",
+      "name": "Max-Fit Woman",
+      "city": "Ankara",
+      "cityDistrict": "Kahramankazan",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ],
+      "changedFields": [
+        "status"
+      ]
+    },
+    {
+      "id": "115TR",
+      "name": "Şelale Sporıum",
+      "city": "İstanbul",
+      "cityDistrict": "Kağıthane",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Havuz"
+      ],
+      "changedFields": [
+        "district",
+        "international"
+      ]
+    },
+    {
+      "id": "1532TR",
+      "name": "Studio Hfit28 Çekmeköy",
+      "city": "İstanbul",
+      "cityDistrict": "Çekmeköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
+      "id": "643TR",
+      "name": "TTFit Abidinpaşa",
+      "city": "Ankara",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Crossfit"
+      ],
+      "changedFields": [
+        "district",
+        "international"
+      ]
+    }
+  ]
+}

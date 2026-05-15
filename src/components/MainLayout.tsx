@@ -1,15 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { List, MapIcon, Maximize, Minimize, Moon, Sun } from 'lucide-react';
+import FacilityDetailDrawer from './FacilityDetailDrawer';
 import MapArea from './MapArea';
 import Sidebar from './Sidebar';
-import type { BenefitFacility, FilterState, GoogleRatingMatch, UserLocation } from '../types';
+import type {
+  BenefitFacility,
+  FacilityChangeSummary,
+  FacilityPersonalKey,
+  FilterState,
+  GoogleRatingMatch,
+  UserFacilityState,
+  UserLocation,
+} from '../types';
 import {
   buildFacilityResults,
   filterAndSortFacilities,
   getUniqueCities,
   loadFacilities,
 } from '../lib/facilities';
+import { loadFacilityChanges } from '../lib/facilityChanges';
 import {
   enrichRatings,
   ENRICH_BATCH_SIZE,
@@ -17,16 +27,28 @@ import {
   RatingsApiError,
   RATINGS_API_AVAILABLE,
 } from '../lib/ratingsApi';
+import {
+  loadUserFacilityStates,
+  saveUserFacilityStates,
+  toggleFacilityFlag,
+  updateFacilityNote,
+} from '../lib/userPreferences';
 
 const DEFAULT_FILTERS: FilterState = {
   query: '',
   city: '',
   district: '',
   activity: '',
-  sort: 'distance',
+  sort: 'recommended',
   minRating: 0,
   minReviews: 0,
   radiusKm: 0,
+  card: '',
+  amenity: '',
+  personal: '',
+  hasPhoto: false,
+  activeOnly: true,
+  internationalOnly: false,
 };
 
 const MAX_RESULTS_FOR_UI = 500;
@@ -34,7 +56,11 @@ const MAX_RESULTS_FOR_UI = 500;
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
   const [facilities, setFacilities] = useState<BenefitFacility[]>([]);
   const [ratings, setRatings] = useState<Record<string, GoogleRatingMatch>>({});
+  const [userStates, setUserStates] = useState<Record<string, UserFacilityState>>(() => loadUserFacilityStates());
+  const [facilityChanges, setFacilityChanges] = useState<FacilityChangeSummary | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [userLocation, setUserLocation] = useState<UserLocation | undefined>();
   const [isLoading, setIsLoading] = useState(true);
@@ -44,18 +70,14 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
 
-  const facilitiesRef = useRef<BenefitFacility[]>([]);
-  const ratingsRef = useRef<Record<string, GoogleRatingMatch>>({});
-  const enrichAbortRef = useRef<AbortController | null>(null);
-  const dailyLimitHitRef = useRef(false);
-
-  useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
-  useEffect(() => { ratingsRef.current = ratings; }, [ratings]);
-
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('mymultisport-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  useEffect(() => {
+    saveUserFacilityStates(userStates);
+  }, [userStates]);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -87,67 +109,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     };
   }, []);
 
-  const pickMissingOrStale = useCallback((): BenefitFacility[] => {
-    const list = facilitiesRef.current;
-    const map = ratingsRef.current;
-    const missing: BenefitFacility[] = [];
-    for (const facility of list) {
-      const rating = map[facility.id];
-      const status = rating?.matchStatus;
-      if (!status || status === 'stale') missing.push(facility);
-      if (missing.length >= ENRICH_BATCH_SIZE) break;
-    }
-    return missing;
-  }, []);
-
-  const runEnrichLoop = useCallback(async (signal: AbortSignal) => {
-    setIsEnriching(true);
-    setError(null);
-    try {
-      while (!signal.aborted) {
-        const batch = pickMissingOrStale();
-        if (batch.length === 0) break;
-        try {
-          const fresh = await enrichRatings(batch);
-          if (signal.aborted) break;
-          setRatings((current) => ({ ...current, ...fresh }));
-        } catch (cause) {
-          if (signal.aborted) break;
-          if (cause instanceof RatingsApiError && cause.status === 429) {
-            dailyLimitHitRef.current = true;
-            setError('Günlük puan kotası doldu (1000). Yarın sayfayı yenilediğinde otomatik devam edecek.');
-          } else {
-            console.error(cause);
-            setError(cause instanceof Error ? cause.message : 'Google puanları alınamadı.');
-          }
-          break;
-        }
-      }
-    } finally {
-      if (enrichAbortRef.current?.signal === signal) {
-        enrichAbortRef.current = null;
-      }
-      setIsEnriching(false);
-    }
-  }, [pickMissingOrStale]);
-
-  const startEnrichLoop = useCallback(() => {
-    if (!RATINGS_API_AVAILABLE) {
-      setError('Lokal dev ortamında Firebase API adresi ayarlı değil. Deploy veya VITE_API_BASE_URL ile puanlar alınır.');
-      return;
-    }
-    if (enrichAbortRef.current) return;
-    if (dailyLimitHitRef.current) return;
-    if (pickMissingOrStale().length === 0) return;
-
-    const controller = new AbortController();
-    enrichAbortRef.current = controller;
-    void runEnrichLoop(controller.signal);
-  }, [pickMissingOrStale, runEnrichLoop]);
-
-  const stopEnrichLoop = useCallback(() => {
-    enrichAbortRef.current?.abort();
-    enrichAbortRef.current = null;
+  useEffect(() => {
+    loadFacilityChanges()
+      .then(setFacilityChanges)
+      .catch((cause) => console.warn(cause));
   }, []);
 
   useEffect(() => {
@@ -164,27 +129,18 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         if (Object.keys(chunk).length === 0) return;
         setRatings((current) => ({ ...current, ...chunk }));
       },
-    })
-      .then(() => {
-        if (cacheAbort.signal.aborted) return;
-        startEnrichLoop();
-      })
-      .catch((cause) => {
-        if (cacheAbort.signal.aborted) return;
-        console.warn(cause);
-        setError('Puan cache okunamadı; tesis listesi yine kullanılabilir.');
-      });
+    }).catch((cause) => {
+      if (cacheAbort.signal.aborted) return;
+      console.warn(cause);
+      setError('Puan cache okunamadı; tesis listesi yine kullanılabilir.');
+    });
 
-    return () => {
-      cacheAbort.abort();
-      enrichAbortRef.current?.abort();
-      enrichAbortRef.current = null;
-    };
-  }, [facilities, startEnrichLoop]);
+    return () => cacheAbort.abort();
+  }, [facilities]);
 
   const allResults = useMemo(
-    () => buildFacilityResults(facilities, ratings, userLocation),
-    [facilities, ratings, userLocation],
+    () => buildFacilityResults(facilities, ratings, userLocation, userStates),
+    [facilities, ratings, userLocation, userStates],
   );
 
   const filteredResults = useMemo(
@@ -196,13 +152,17 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
   const stats = useMemo(() => {
     const matched = filteredResults.filter((result) => result.rating?.matchStatus === 'matched').length;
+    const userStateList = Object.values(userStates);
     return {
       total: facilities.length,
       shown: filteredResults.length,
       matched,
       pending: Math.max(filteredResults.length - matched, 0),
+      favorites: userStateList.filter((state) => state.favorite).length,
+      wantToGo: userStateList.filter((state) => state.wantToGo).length,
+      visited: userStateList.filter((state) => state.visited).length,
     };
-  }, [facilities.length, filteredResults]);
+  }, [facilities.length, filteredResults, userStates]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -240,14 +200,63 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     );
   }, []);
 
-  const toggleEnrichLoop = useCallback(() => {
-    if (isEnriching) {
-      stopEnrichLoop();
-    } else {
-      dailyLimitHitRef.current = false;
-      startEnrichLoop();
+  const refreshRatings = useCallback(() => {
+    if (!RATINGS_API_AVAILABLE) {
+      setError('Lokal dev ortamında Firebase API adresi ayarlı değil. Deploy veya VITE_API_BASE_URL ile puanlar alınır.');
+      return;
     }
-  }, [isEnriching, startEnrichLoop, stopEnrichLoop]);
+
+    const missing = displayedResults
+      .filter((result) => {
+        const status = result.rating?.matchStatus;
+        return !status || status === 'stale';
+      })
+      .slice(0, ENRICH_BATCH_SIZE)
+      .map((result) => result.facility);
+
+    if (missing.length === 0) {
+      setError('Bu görünümde güncellenecek tesis kalmadı.');
+      return;
+    }
+
+    setIsEnriching(true);
+    setError(null);
+    enrichRatings(missing)
+      .then((freshRatings) => {
+        setRatings((current) => ({ ...current, ...freshRatings }));
+      })
+      .catch((cause) => {
+        console.error(cause);
+        if (cause instanceof RatingsApiError && cause.status === 429) {
+          setError('Günlük puan kotası doldu. Mevcut cache ile devam edebilirsin.');
+        } else {
+          setError(cause instanceof Error ? cause.message : 'Google puanları alınamadı.');
+        }
+      })
+      .finally(() => setIsEnriching(false));
+  }, [displayedResults]);
+
+  const togglePersonal = useCallback((facilityId: string, key: FacilityPersonalKey) => {
+    setUserStates((current) => toggleFacilityFlag(current, facilityId, key));
+  }, []);
+
+  const updateNote = useCallback((facilityId: string, note: string) => {
+    setUserStates((current) => updateFacilityNote(current, facilityId, note));
+  }, []);
+
+  const toggleCompare = useCallback((facilityId: string) => {
+    setCompareIds((current) => {
+      if (current.includes(facilityId)) {
+        return current.filter((id) => id !== facilityId);
+      }
+      if (current.length >= 4) {
+        setError('Karşılaştırma için en fazla 4 tesis seçilebilir.');
+        return current;
+      }
+      setError(null);
+      return [...current, facilityId];
+    });
+  }, []);
 
   const handleSelect = (id: string) => {
     setSelectedPlaceId(id);
@@ -260,8 +269,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     }
   }, [displayedResults, selectedPlaceId]);
 
+  const detailResult = detailPlaceId
+    ? allResults.find((result) => result.facility.id === detailPlaceId)
+    : undefined;
+  const compareResults = compareIds
+    .map((id) => allResults.find((result) => result.facility.id === id))
+    .filter((result): result is NonNullable<typeof result> => Boolean(result));
+
   return (
-    <div className="relative flex h-[100dvh] w-full overflow-hidden bg-white text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:flex-row">
+    <div className="relative flex h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--text-primary)] md:flex-row">
       <div className={`absolute inset-0 z-20 md:relative md:block ${mobileView === 'list' ? 'block' : 'hidden'}`}>
         <Sidebar
           allFacilities={facilities}
@@ -274,12 +290,21 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
           }}
           selectedPlaceId={selectedPlaceId}
           onSelectPlace={handleSelect}
+          onOpenDetail={(id) => {
+            setDetailPlaceId(id);
+            setSelectedPlaceId(id);
+          }}
           onLocate={locateUser}
-          onRefreshRatings={toggleEnrichLoop}
+          onRefreshRatings={refreshRatings}
+          onTogglePersonal={togglePersonal}
+          compareIds={compareIds}
+          compareResults={compareResults}
+          onToggleCompare={toggleCompare}
           isLoading={isLoading}
           isEnriching={isEnriching}
           error={error}
           stats={stats}
+          facilityChanges={facilityChanges}
         />
       </div>
 
@@ -306,15 +331,24 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         </div>
 
         {mapsAvailable && (
-          <div className="absolute bottom-24 left-1/2 z-10 hidden -translate-x-1/2 rounded-full bg-white/95 px-4 py-2 text-xs font-bold text-slate-700 shadow-lg dark:bg-slate-950/95 dark:text-slate-200 md:block">
-            {displayedResults.length.toLocaleString('tr-TR')} pin gösteriliyor
+          <div className="absolute bottom-24 left-1/2 z-10 hidden -translate-x-1/2 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)]/95 px-4 py-2 text-xs font-bold text-[var(--text-secondary)] shadow-[var(--shadow-soft)] backdrop-blur md:block">
+            {displayedResults.length.toLocaleString('tr-TR')} pin gruplandı
             {filteredResults.length > displayedResults.length ? ` / ${filteredResults.length.toLocaleString('tr-TR')} sonuçtan ilk ${displayedResults.length}` : ''}
           </div>
         )}
       </main>
 
+      <FacilityDetailDrawer
+        result={detailResult}
+        isCompareSelected={detailResult ? compareIds.includes(detailResult.facility.id) : false}
+        onClose={() => setDetailPlaceId(null)}
+        onTogglePersonal={togglePersonal}
+        onUpdateNote={updateNote}
+        onToggleCompare={toggleCompare}
+      />
+
       <button
-        className="fixed bottom-6 left-1/2 z-30 inline-flex h-12 -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-sm font-bold text-white shadow-2xl transition hover:bg-blue-700 md:hidden"
+        className="fixed bottom-6 left-1/2 z-30 inline-flex h-12 -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-6 text-sm font-bold text-white shadow-2xl transition hover:bg-[var(--accent-strong)] md:hidden"
         onClick={() => setMobileView((view) => view === 'map' ? 'list' : 'map')}
       >
         {mobileView === 'map' ? (
@@ -335,15 +369,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
 function MapKeyFallback() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-slate-100 p-6 text-slate-900 dark:bg-slate-900 dark:text-white">
-      <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
+    <div className="flex h-full w-full items-center justify-center bg-[var(--map-fallback)] p-6 text-[var(--text-primary)]">
+      <div className="max-w-md rounded-[1.25rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-6 shadow-[var(--shadow-soft)]">
         <h2 className="text-xl font-black">Google Maps Browser Key gerekli</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
           Liste, filtre ve MultiSport tesis datası çalışıyor. Haritayı açmak için Maps JavaScript API anahtarını
-          <code className="mx-1 rounded bg-slate-100 px-1.5 py-0.5 text-xs dark:bg-slate-800">VITE_GOOGLE_MAPS_BROWSER_KEY</code>
+          <code className="mx-1 rounded bg-[var(--surface-muted)] px-1.5 py-0.5 text-xs">VITE_GOOGLE_MAPS_BROWSER_KEY</code>
           olarak ekleyip uygulamayı yeniden build edin.
         </p>
-        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-xs text-[var(--text-tertiary)]">
           Google Places puan anahtarı client tarafına konmaz; Firebase Functions secret olarak kalır.
         </p>
       </div>
@@ -358,7 +392,7 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-lg transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] text-[var(--text-secondary)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--surface-muted)]"
     >
       {children}
     </button>

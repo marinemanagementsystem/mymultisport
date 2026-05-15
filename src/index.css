@@ -1,6 +1,64 @@
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  color-scheme: light;
+  --app-bg: #eef2f0;
+  --surface-panel: #f8faf8;
+  --surface-raised: #ffffff;
+  --surface-muted: #edf2ef;
+  --map-fallback: #e6ece9;
+  --text-primary: #12201b;
+  --text-secondary: #4b5f57;
+  --text-tertiary: #789088;
+  --border-soft: #d9e2dd;
+  --border-strong: #c7d4ce;
+  --accent: #0f766e;
+  --accent-strong: #0b5f59;
+  --accent-text: #0f5f59;
+  --accent-muted: #dff3ee;
+  --accent-soft: #a7d8ce;
+  --accent-ring: rgb(15 118 110 / 0.16);
+  --warning-bg: #fff7ed;
+  --warning-border: #fed7aa;
+  --warning-text: #9a3412;
+  --chip-blue: #e5efff;
+  --chip-blue-text: #1e3a8a;
+  --chip-neutral: #edf2ef;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-soft: 0 16px 40px rgb(15 23 42 / 0.14);
+  --shadow-panel: 0 24px 70px rgb(15 23 42 / 0.18);
+}
+
+.dark {
+  color-scheme: dark;
+  --app-bg: #08110f;
+  --surface-panel: #0d1715;
+  --surface-raised: #121f1c;
+  --surface-muted: #182824;
+  --map-fallback: #101a18;
+  --text-primary: #eef8f4;
+  --text-secondary: #b6c8c0;
+  --text-tertiary: #819891;
+  --border-soft: #21332e;
+  --border-strong: #2f453f;
+  --accent: #14b8a6;
+  --accent-strong: #0f9f91;
+  --accent-text: #7dded0;
+  --accent-muted: #123a35;
+  --accent-soft: #1b645b;
+  --accent-ring: rgb(20 184 166 / 0.18);
+  --warning-bg: #3a2515;
+  --warning-border: #7c4a19;
+  --warning-text: #fed7aa;
+  --chip-blue: #10243f;
+  --chip-blue-text: #bfdbfe;
+  --chip-neutral: #182824;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.18);
+  --shadow-soft: 0 16px 40px rgb(0 0 0 / 0.34);
+  --shadow-panel: 0 24px 70px rgb(0 0 0 / 0.42);
+}
+
 html,
 body,
 #root {
@@ -11,13 +69,68 @@ body,
 body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
+  background: var(--app-bg);
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   letter-spacing: 0;
+}
+
+.action-button {
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.action-button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.action-button.primary:hover {
+  background: var(--accent-strong);
+}
+
+.action-button.secondary {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+}
+
+.action-button.secondary:hover {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.app-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: var(--border-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {

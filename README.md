@@ -20,6 +20,17 @@ npm run dev
 ```
 
 Tesis datası `npm run sync:facilities` ile `https://benefitsystems.com.tr/facilities-tr.json` kaynağından yenilenir. `npm run build` öncesinde otomatik çalışır.
+Sync işlemi ayrıca `public/data/facility-changes.json` dosyasına son anlamlı tesis değişim özetini yazar; uygulamadaki "Yenilikler" paneli bu statik dosyadan beslenir.
+
+## İlk Ürün Geliştirmeleri
+
+- Görsel sistem premium, sade ve operasyonel bir tesis keşif arayüzüne taşındı.
+- Tesis detay paneli; tüm aktiviteler, kartlar, olanaklar, indirimler, adres ve harita/MultiSport linklerini gösterir.
+- Favori, "gitmek istiyorum", "gittim" ve kişisel notlar sadece cihazdaki `localStorage` içinde tutulur.
+- Kullanıcı yorumu, Firebase Auth ve Firestore kullanıcı yazmaları bu sürümde yoktur; ek moderasyon veya API maliyeti doğurmaz.
+- Kart tipi, fotoğraflı tesis, uluslararası ziyaret, aktif tesis ve kişisel liste filtreleri eklendi.
+- "Önerilen" sıralama client tarafında mesafe, puan, yorum güveni ve mevcut filtreleri birlikte değerlendirir.
+- Karşılaştırma paneli 2-4 tesisi yan yana değerlendirmek için kullanılabilir.
 
 Harita için browser key gerekir:
 
