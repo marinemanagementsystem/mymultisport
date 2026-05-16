@@ -33,6 +33,7 @@ import {
   toggleFacilityFlag,
   updateFacilityNote,
 } from '../lib/userPreferences';
+import { useI18n } from '../lib/i18n';
 
 const DEFAULT_FILTERS: FilterState = {
   query: '',
@@ -57,6 +58,7 @@ const DEFAULT_FILTERS: FilterState = {
 const MAX_RESULTS_FOR_UI = 500;
 
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
+  const { t, formatNumber } = useI18n();
   const [facilities, setFacilities] = useState<BenefitFacility[]>([]);
   const [ratings, setRatings] = useState<Record<string, GoogleRatingMatch>>({});
   const [userStates, setUserStates] = useState<Record<string, UserFacilityState>>(() => loadUserFacilityStates());
@@ -102,7 +104,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       })
       .catch((cause) => {
         console.error(cause);
-        if (mounted) setError(cause instanceof Error ? cause.message : 'Tesis listesi yüklenemedi.');
+        if (mounted) setError(t('errors.facilitiesLoadFailed'));
       })
       .finally(() => {
         if (mounted) setIsLoading(false);
@@ -135,7 +137,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     }).catch((cause) => {
       if (cacheAbort.signal.aborted) return;
       console.warn(cause);
-      setError('Puan cache okunamadı; tesis listesi yine kullanılabilir.');
+      setError(t('errors.cacheReadFailed'));
     });
 
     return () => cacheAbort.abort();
@@ -184,7 +186,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
   const locateUser = useCallback(() => {
     if (!navigator.geolocation) {
-      setError('Bu cihazda konum servisi desteklenmiyor.');
+      setError(t('errors.geolocationUnsupported'));
       return;
     }
 
@@ -204,15 +206,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         setError(null);
       },
       () => {
-        setError('Konum izni alınamadı. Şehir/ilçe filtresiyle devam edebilirsin.');
+        setError(t('errors.geolocationDenied'));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
-  }, []);
+  }, [t]);
 
   const refreshRatings = useCallback(() => {
     if (!RATINGS_API_AVAILABLE) {
-      setError('Lokal dev ortamında Firebase API adresi ayarlı değil. Deploy veya VITE_API_BASE_URL ile puanlar alınır.');
+      setError(t('errors.apiMissing'));
       return;
     }
 
@@ -225,7 +227,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       .map((result) => result.facility);
 
     if (missing.length === 0) {
-      setError('Bu görünümde güncellenecek tesis kalmadı.');
+      setError(t('errors.noRefreshRemaining'));
       return;
     }
 
@@ -238,13 +240,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       .catch((cause) => {
         console.error(cause);
         if (cause instanceof RatingsApiError && cause.status === 429) {
-          setError('Günlük puan kotası doldu. Mevcut cache ile devam edebilirsin.');
+          setError(t('errors.quotaReached'));
+        } else if (cause instanceof RatingsApiError && cause.messageKey) {
+          setError(t(cause.messageKey, { status: cause.status }));
         } else {
-          setError(cause instanceof Error ? cause.message : 'Google puanları alınamadı.');
+          setError(t('errors.googleRatingsFailed'));
         }
       })
       .finally(() => setIsEnriching(false));
-  }, [refreshableResults]);
+  }, [refreshableResults, t]);
 
   const togglePersonal = useCallback((facilityId: string, key: FacilityPersonalKey) => {
     setUserStates((current) => toggleFacilityFlag(current, facilityId, key));
@@ -260,13 +264,13 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         return current.filter((id) => id !== facilityId);
       }
       if (current.length >= 4) {
-        setError('Karşılaştırma için en fazla 4 tesis seçilebilir.');
+        setError(t('errors.compareMax'));
         return current;
       }
       setError(null);
       return [...current, facilityId];
     });
-  }, []);
+  }, [t]);
 
   const handleSelect = (id: string) => {
     setSelectedPlaceId(id);
@@ -333,18 +337,23 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         )}
 
         <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
-          <IconButton label={isDark ? 'Açık mod' : 'Koyu mod'} onClick={() => setIsDark((value) => !value)}>
+          <IconButton label={isDark ? t('main.lightMode') : t('main.darkMode')} onClick={() => setIsDark((value) => !value)}>
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </IconButton>
-          <IconButton label={isFullscreen ? 'Tam ekrandan çık' : 'Tam ekran'} onClick={toggleFullscreen}>
+          <IconButton label={isFullscreen ? t('main.exitFullscreen') : t('main.fullscreen')} onClick={toggleFullscreen}>
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </IconButton>
         </div>
 
         {mapsAvailable && (
           <div className="absolute bottom-24 left-1/2 z-10 hidden -translate-x-1/2 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)]/95 px-4 py-2 text-xs font-bold text-[var(--text-secondary)] shadow-[var(--shadow-soft)] backdrop-blur md:block">
-            {displayedResults.length.toLocaleString('tr-TR')} pin gruplandı
-            {filteredResults.length > displayedResults.length ? ` / ${filteredResults.length.toLocaleString('tr-TR')} sonuçtan ilk ${displayedResults.length}` : ''}
+            {t('main.pinsGrouped', { count: formatNumber(displayedResults.length) })}
+            {filteredResults.length > displayedResults.length
+              ? t('main.firstResultsFrom', {
+                total: formatNumber(filteredResults.length),
+                shown: formatNumber(displayedResults.length),
+              })
+              : ''}
           </div>
         )}
       </main>
@@ -365,12 +374,12 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         {mobileView === 'map' ? (
           <>
             <List className="h-5 w-5" />
-            Liste görünümü
+            {t('main.listView')}
           </>
         ) : (
           <>
             <MapIcon className="h-5 w-5" />
-            Harita görünümü
+            {t('main.mapView')}
           </>
         )}
       </button>
@@ -379,17 +388,21 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 }
 
 function MapKeyFallback() {
+  const { t } = useI18n();
+  const envKey = 'VITE_GOOGLE_MAPS_BROWSER_KEY';
+  const [bodyBeforeKey, bodyAfterKey = ''] = t('mapFallback.body', { key: envKey }).split(envKey);
+
   return (
     <div className="flex h-full w-full items-center justify-center bg-[var(--map-fallback)] p-6 text-[var(--text-primary)]">
       <div className="max-w-md rounded-[1.25rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-6 shadow-[var(--shadow-soft)]">
-        <h2 className="text-xl font-black">Google Maps Browser Key gerekli</h2>
+        <h2 className="text-xl font-black">{t('mapFallback.title')}</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          Liste, filtre ve MultiSport tesis datası çalışıyor. Haritayı açmak için Maps JavaScript API anahtarını
-          <code className="mx-1 rounded bg-[var(--surface-muted)] px-1.5 py-0.5 text-xs">VITE_GOOGLE_MAPS_BROWSER_KEY</code>
-          olarak ekleyip uygulamayı yeniden build edin.
+          {bodyBeforeKey}
+          <code className="mx-1 rounded bg-[var(--surface-muted)] px-1.5 py-0.5 text-xs">{envKey}</code>
+          {bodyAfterKey}
         </p>
         <p className="mt-3 text-xs text-[var(--text-tertiary)]">
-          Google Places puan anahtarı client tarafına konmaz; Firebase Functions secret olarak kalır.
+          {t('mapFallback.note')}
         </p>
       </div>
     </div>

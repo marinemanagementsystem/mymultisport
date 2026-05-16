@@ -151,3 +151,5 @@ export interface FacilityChangeSummary {
   removedFacilities: FacilityChangeItem[];
   updatedFacilities: FacilityUpdatedChange[];
 }
+
+export type { LanguageCode } from './lib/i18n';

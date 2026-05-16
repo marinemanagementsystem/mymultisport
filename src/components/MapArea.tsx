@@ -3,6 +3,7 @@ import { Clock3, ExternalLink, MapPin, Star } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import type { FacilityResult, UserLocation } from '../types';
 import { formatOpeningHoursSummary, getGoogleMapsSearchUrl } from '../lib/facilities';
+import { useI18n } from '../lib/i18n';
 
 interface MapAreaProps {
   results: FacilityResult[];
@@ -23,9 +24,10 @@ const GRID_SIZE = 0.018;
 const MAX_CLUSTERED_RESULTS = 350;
 
 const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResult, isSelected: boolean, onClick: () => void }) => {
+  const { language, t, formatCount } = useI18n();
   const [markerRef, marker] = useAdvancedMarkerRef();
   const { facility, rating } = result;
-  const hoursSummary = formatOpeningHoursSummary(rating);
+  const hoursSummary = formatOpeningHoursSummary(rating, language);
 
   const position = {
     lat: facility.lat,
@@ -56,10 +58,10 @@ const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResul
             <div className="mb-2 flex items-center gap-2 text-sm text-gray-700">
               <div className="flex items-center font-medium">
                 <Star className="mr-1 h-4 w-4 fill-amber-400 text-amber-400" />
-                <span>{rating?.rating ? rating.rating.toFixed(1) : 'Bekliyor'}</span>
+                <span>{rating?.rating !== undefined ? rating.rating.toFixed(1) : t('facility.ratingPending')}</span>
               </div>
               <span className="text-gray-400">•</span>
-              <span>{rating?.userRatingCount ? `${rating.userRatingCount} yorum` : 'Yorum yok'}</span>
+              <span>{rating?.userRatingCount ? formatCount(rating.userRatingCount, 'review') : t('facility.noReviews')}</span>
             </div>
             <p className="flex items-start text-xs text-gray-500">
               <MapPin className="mr-1 mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
@@ -77,7 +79,7 @@ const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResul
               target="_blank"
               rel="noreferrer"
             >
-              Google Haritalar'da aç
+              {t('map.openGoogleMaps')}
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
@@ -88,11 +90,12 @@ const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResul
 };
 
 function ClusterMarker({ cluster }: { cluster: MarkerCluster }) {
+  const { t, formatNumber } = useI18n();
   const map = useMap();
   return (
     <AdvancedMarker
       position={cluster.position}
-      title={`${cluster.count} tesis`}
+      title={t('map.clusterTitle', { count: formatNumber(cluster.count) })}
       onClick={() => {
         map?.panTo(cluster.position);
         map?.setZoom(Math.min((map.getZoom() || 11) + 2, 17));
@@ -106,6 +109,7 @@ function ClusterMarker({ cluster }: { cluster: MarkerCluster }) {
 }
 
 export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDark, userLocation }: MapAreaProps) {
+  const { t } = useI18n();
   const map = useMap();
   const selected = results.find((result) => result.facility.id === selectedPlaceId);
   const clusters = useMemo(() => buildClusters(results, selectedPlaceId), [results, selectedPlaceId]);
@@ -140,7 +144,7 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
       zoomControl={true}
     >
       {userLocation && (
-        <AdvancedMarker position={userLocation} title="Konumunuz">
+        <AdvancedMarker position={userLocation} title={t('map.userLocation')}>
           <div className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-lg ring-4 ring-emerald-500/25" />
         </AdvancedMarker>
       )}
@@ -161,7 +165,7 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
       })}
 
       <div className="absolute left-4 top-4 rounded-2xl border border-white/60 bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-950/90 dark:text-slate-200">
-        Mavi: puanlı · Gri: bekleyen · Siyah: grup
+        {t('map.legend')}
       </div>
     </GoogleMap>
   );

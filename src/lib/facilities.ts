@@ -8,6 +8,8 @@ import type {
   UserFacilityState,
   UserLocation,
 } from '../types';
+import type { LanguageCode } from './i18n';
+import { getWeekdayLabel, translate } from './i18n';
 
 const BENEFIT_FACILITY_DETAIL_BASE = 'https://benefitsystems.com.tr/tesisler/';
 const DEFAULT_TIME_ZONE = 'Europe/Istanbul';
@@ -15,7 +17,6 @@ const DAY_MINUTES = 24 * 60;
 const WEEK_MINUTES = 7 * DAY_MINUTES;
 
 const collator = new Intl.Collator('tr', { sensitivity: 'base' });
-const weekdayLabels = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
 export async function loadFacilities(): Promise<BenefitFacility[]> {
   const response = await fetch('/data/facilities-tr.json', {
@@ -194,22 +195,34 @@ export function getGoogleMapsSearchUrl(facility: BenefitFacility, rating?: Googl
   return `https://www.google.com/maps/search/?${params.toString()}`;
 }
 
-export function formatOpeningHoursSummary(rating?: GoogleRatingMatch, now = new Date()): string | null {
+export function formatOpeningHoursSummary(
+  rating?: GoogleRatingMatch,
+  languageOrNow: LanguageCode | Date = 'tr',
+  now = new Date(),
+): string | null {
+  const language = languageOrNow instanceof Date ? 'tr' : languageOrNow;
+  const referenceDate = languageOrNow instanceof Date ? languageOrNow : now;
   const hours = getOpeningHours(rating);
   if (!hours) return null;
 
-  const reference = getLocalWeekMinute(now, getHoursTimeZone(hours));
+  const reference = getLocalWeekMinute(referenceDate, getHoursTimeZone(hours));
   const periods = getNormalizedPeriods(hours);
   const activePeriod = periods.length > 0 ? findContainingPeriod(periods, reference.weekMinute) : undefined;
   const isOpen = activePeriod ? true : hours.openNow;
 
   if (isOpen === true) {
-    return `Açık${activePeriod ? ` · ${formatWeeklyTime(activePeriod.close, reference.day)}'a kadar` : ''}`;
+    if (!activePeriod) return translate(language, 'hoursSummary.open');
+    return translate(language, 'hoursSummary.openUntil', {
+      time: formatWeeklyTime(activePeriod.close, reference.day, language),
+    });
   }
 
   if (isOpen === false) {
     const nextOpen = periods.length > 0 ? findNextOpeningMinute(periods, reference.weekMinute) : undefined;
-    return `Kapalı${nextOpen !== undefined ? ` · ${formatWeeklyTime(nextOpen, reference.day)} açılır` : ''}`;
+    if (nextOpen === undefined) return translate(language, 'hoursSummary.closed');
+    return translate(language, 'hoursSummary.opensAt', {
+      time: formatWeeklyTime(nextOpen, reference.day, language),
+    });
   }
 
   return null;
@@ -412,14 +425,14 @@ function getLocalWeekMinute(date: Date, timeZone: string): { day: number; weekMi
   }
 }
 
-function formatWeeklyTime(weekMinute: number, referenceDay: number): string {
+function formatWeeklyTime(weekMinute: number, referenceDay: number, language: LanguageCode): string {
   const normalized = ((weekMinute % WEEK_MINUTES) + WEEK_MINUTES) % WEEK_MINUTES;
   const day = Math.floor(normalized / DAY_MINUTES);
   const minuteOfDay = normalized % DAY_MINUTES;
   const hour = Math.floor(minuteOfDay / 60);
   const minute = minuteOfDay % 60;
   const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  return day === referenceDay ? time : `${weekdayLabels[day]} ${time}`;
+  return day === referenceDay ? time : `${getWeekdayLabel(day, language)} ${time}`;
 }
 
 export function distanceKm(from: UserLocation, to: Pick<BenefitFacility, 'lat' | 'lng'>): number {

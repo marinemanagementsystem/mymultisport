@@ -1,4 +1,5 @@
 import type { BenefitFacility, GoogleRatingMatch } from '../types';
+import type { TranslationKey } from './i18n';
 
 const MAX_ENRICH_BATCH = 100;
 const MAX_GET_BATCH = 100;
@@ -13,17 +14,26 @@ export const RATINGS_API_AVAILABLE = Boolean(configuredApiBase)
 export class RatingsApiError extends Error {
   status: number;
   body?: unknown;
-  constructor(message: string, status: number, body?: unknown) {
+  messageKey?: TranslationKey;
+  constructor(message: string, status: number, body?: unknown, messageKey?: TranslationKey) {
     super(message);
     this.name = 'RatingsApiError';
     this.status = status;
     this.body = body;
+    this.messageKey = messageKey;
   }
 }
 
 export async function getHealth(): Promise<{ ok: boolean; project?: string; time?: string }> {
   const response = await fetch(`${API_BASE_URL}/api/health`);
-  if (!response.ok) throw new RatingsApiError(`API health hatası (${response.status})`, response.status);
+  if (!response.ok) {
+    throw new RatingsApiError(
+      `API health failed (${response.status})`,
+      response.status,
+      undefined,
+      'errors.apiHealthFailed',
+    );
+  }
   return response.json();
 }
 
@@ -35,7 +45,12 @@ export async function getRatings(facilityIds: string[]): Promise<Record<string, 
   });
 
   if (!response.ok) {
-    throw new RatingsApiError(`Puan cache okunamadı (${response.status})`, response.status);
+    throw new RatingsApiError(
+      `Rating cache could not be read (${response.status})`,
+      response.status,
+      undefined,
+      'errors.ratingsCacheFailedStatus',
+    );
   }
 
   const payload = await response.json() as { ratings: GoogleRatingMatch[] };
@@ -98,9 +113,10 @@ export async function enrichRatings(facilities: BenefitFacility[]): Promise<Reco
     let body: unknown;
     try { body = await response.json(); } catch { /* ignore */ }
     throw new RatingsApiError(
-      `Google puanları güncellenemedi (${response.status})`,
+      `Google ratings could not be updated (${response.status})`,
       response.status,
       body,
+      'errors.ratingsEnrichFailedStatus',
     );
   }
 
