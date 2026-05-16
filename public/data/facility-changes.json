@@ -1,14 +1,77 @@
 {
-  "generatedAt": "2026-05-15T06:11:17.153Z",
+  "generatedAt": "2026-05-16T18:43:49.227Z",
   "sourceUrl": "https://benefitsystems.com.tr/facilities-tr.json",
-  "previousCount": 4176,
-  "currentCount": 4174,
+  "previousCount": 4174,
+  "currentCount": 4179,
   "newFacilities": [
     {
-      "id": "5691TR",
-      "name": "Gorilbey Gym Botanik",
+      "id": "1227TR",
+      "name": "Atılgan Fight Academy",
       "city": "Ankara",
       "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Kick Box"
+      ]
+    },
+    {
+      "id": "5665TR",
+      "name": "Atölye Tez",
+      "city": "İstanbul",
+      "cityDistrict": "Üsküdar",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5609TR",
+      "name": "Dynamic Pilates Bahçelievler",
+      "city": "İstanbul",
+      "cityDistrict": "Bahçelievler",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5631TR",
+      "name": "Egzersiz Atölyesi",
+      "city": "İstanbul",
+      "cityDistrict": "Üsküdar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5565TR",
+      "name": "Fit Couple Personal Coaching",
+      "city": "İstanbul",
+      "cityDistrict": "Bayrampaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman"
+      ]
+    },
+    {
+      "id": "5624TR",
+      "name": "Fitness Form Club 2",
+      "city": "İstanbul",
+      "cityDistrict": "Sancaktepe",
       "cards": [
         "Plus",
         "Classic"
@@ -18,29 +81,153 @@
       ]
     },
     {
-      "id": "660TR",
-      "name": "Gorilbey Gym Tunalı Esat",
-      "city": "Ankara",
-      "cityDistrict": "Çankaya",
+      "id": "5611TR",
+      "name": "FizyoDynamic Pilates Bahçelievler",
+      "city": "İstanbul",
+      "cityDistrict": "Bahçelievler",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5564TR",
+      "name": "Joy 8 Art&Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Bayrampaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Pilates",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4484TR",
+      "name": "MaxHitBoxing Manisa",
+      "city": "Manisa",
+      "cityDistrict": "Yunusemre",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Boks"
+      ]
+    },
+    {
+      "id": "5552TR",
+      "name": "Moonlight Pilates Sancaktepe",
+      "city": "İstanbul",
+      "cityDistrict": "Sancaktepe",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
-        "Boks",
-        "Fitness & Gym",
-        "Kick Box",
-        "Mat Pilates",
-        "Yoga"
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5540TR",
+      "name": "Nimbus Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Bayrampaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Kadınlara Özel Hizmet",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5431TR",
+      "name": "Nivo Pilates Yenibosna",
+      "city": "İstanbul",
+      "cityDistrict": "Bahçelievler",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
       ]
     }
   ],
   "removedFacilities": [
     {
-      "id": "3531TR",
-      "name": "Fit Point Spor Salonu",
-      "city": "İstanbul",
-      "cityDistrict": "Zeytinburnu",
+      "id": "2959TR",
+      "name": "Ankara Atlıspor Kulübü",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Binicilik"
+      ]
+    },
+    {
+      "id": "1333TR",
+      "name": "Aslı Başar Yoga Okulu",
+      "city": "İzmir",
+      "cityDistrict": "Bornova",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Yoga"
+      ]
+    },
+    {
+      "id": "1894TR",
+      "name": "Benefit Slimming Studio",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman"
+      ]
+    },
+    {
+      "id": "1866TR",
+      "name": "Joker Fitness",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "4006TR",
+      "name": "Nunu Pilates Studio",
+      "city": "İzmir",
+      "cityDistrict": "Karaburun",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "Mat Pilates",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5080TR",
+      "name": "Piramit Fitness Center",
+      "city": "Afyonkarahisar",
+      "cityDistrict": "Merkez",
       "cards": [
         "Plus"
       ],
@@ -49,43 +236,16 @@
       ]
     },
     {
-      "id": "4239TR",
-      "name": "Konum Poligon",
+      "id": "4683TR",
+      "name": "Sekizfit",
       "city": "İstanbul",
-      "cityDistrict": "Maltepe",
+      "cityDistrict": "Çekmeköy",
       "cards": [
         "Plus"
       ],
       "activities": [
-        "Airsoft"
-      ]
-    },
-    {
-      "id": "2361TR",
-      "name": "OverDose Fitness",
-      "city": "Denizli",
-      "cityDistrict": "Merkezefendi",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Boks",
-        "Crossfit",
+        "Fonksiyonel Antrenman",
         "Reformer Pilates"
-      ]
-    },
-    {
-      "id": "1095TR",
-      "name": "Tekno Okçuluk Spor Kulübü",
-      "city": "İstanbul",
-      "cityDistrict": "Pendik",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Okçuluk"
       ]
     }
   ],
@@ -94,7 +254,7 @@
       "id": "3090TR",
       "name": "B&T Sports",
       "city": "Ankara",
-      "cityDistrict": "",
+      "cityDistrict": "Çankaya",
       "cards": [
         "Plus",
         "Classic"
@@ -107,10 +267,26 @@
       ]
     },
     {
+      "id": "5601TR",
+      "name": "GG Poligon Gebze",
+      "city": "Kocaeli",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Airsoft"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
       "id": "2933TR",
       "name": "GYMLENİX Spor Salonu",
       "city": "İstanbul",
-      "cityDistrict": "",
+      "cityDistrict": "Sultanbeyli",
       "cards": [
         "Plus",
         "Classic"
@@ -127,7 +303,7 @@
       "id": "5479TR",
       "name": "Heal Inn Pilates",
       "city": "Ankara",
-      "cityDistrict": "",
+      "cityDistrict": "Keçiören",
       "cards": [
         "Plus",
         "Classic"
@@ -143,7 +319,7 @@
       "id": "5531TR",
       "name": "İstanbul Surf House",
       "city": "İstanbul",
-      "cityDistrict": "",
+      "cityDistrict": "Beykoz",
       "cards": [
         "Plus"
       ],
@@ -157,44 +333,26 @@
       ]
     },
     {
-      "id": "824TR",
-      "name": "Max-Fit Woman",
-      "city": "Ankara",
-      "cityDistrict": "Kahramankazan",
+      "id": "2729TR",
+      "name": "LD Tenis Balçova",
+      "city": "İzmir",
+      "cityDistrict": "Balçova",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
-        "Fitness & Gym"
+        "Tenis"
       ],
       "changedFields": [
         "status"
       ]
     },
     {
-      "id": "115TR",
-      "name": "Şelale Sporıum",
+      "id": "5123TR",
+      "name": "Sista Pilates",
       "city": "İstanbul",
-      "cityDistrict": "Kağıthane",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Fitness & Gym",
-        "Havuz"
-      ],
-      "changedFields": [
-        "district",
-        "international"
-      ]
-    },
-    {
-      "id": "1532TR",
-      "name": "Studio Hfit28 Çekmeköy",
-      "city": "İstanbul",
-      "cityDistrict": "Çekmeköy",
+      "cityDistrict": "Beşiktaş",
       "cards": [
         "Plus",
         "Classic"
@@ -203,20 +361,38 @@
         "Reformer Pilates"
       ],
       "changedFields": [
-        "district"
+        "address"
       ]
     },
     {
       "id": "643TR",
       "name": "TTFit Abidinpaşa",
       "city": "Ankara",
-      "cityDistrict": "",
+      "cityDistrict": "Mamak",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
         "Crossfit"
+      ],
+      "changedFields": [
+        "district",
+        "international"
+      ]
+    },
+    {
+      "id": "4973TR",
+      "name": "Yay Academy",
+      "city": "İstanbul",
+      "cityDistrict": "",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "BJJ- Brezilian Jiu Jitsu",
+        "Boks",
+        "Kick Box"
       ],
       "changedFields": [
         "district",

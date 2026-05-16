@@ -1,4 +1,5 @@
 export type MatchStatus = 'matched' | 'ambiguous' | 'not_found' | 'stale';
+export type HoursFilterMode = '' | 'open_now' | 'closed_now' | 'open_at' | 'open_until' | 'open_between';
 
 export interface BenefitActivity {
   name: string;
@@ -34,9 +35,14 @@ export interface GoogleRatingMatch {
   placeId?: string;
   displayName?: string;
   formattedAddress?: string;
+  businessStatus?: string;
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
+  openingHours?: GoogleOpeningHours;
+  currentOpeningHours?: GoogleOpeningHours;
+  regularOpeningHours?: GoogleOpeningHours;
+  utcOffsetMinutes?: number;
   location?: {
     lat: number;
     lng: number;
@@ -46,6 +52,27 @@ export interface GoogleRatingMatch {
   distanceMeters?: number;
   updatedAt?: string;
   error?: string;
+}
+
+export interface GoogleOpeningHours {
+  openNow?: boolean;
+  nextCloseTime?: string;
+  nextOpenTime?: string;
+  weekdayDescriptions?: string[];
+  periods?: GoogleOpeningPeriod[];
+  timeZone?: string;
+  utcOffsetMinutes?: number;
+}
+
+export interface GoogleOpeningPeriod {
+  open?: GoogleOpeningPoint;
+  close?: GoogleOpeningPoint;
+}
+
+export interface GoogleOpeningPoint {
+  day?: number;
+  hour?: number;
+  minute?: number;
 }
 
 export interface FacilityResult {
@@ -81,6 +108,9 @@ export interface FilterState {
   minRating: number;
   minReviews: number;
   radiusKm: number;
+  hoursMode: HoursFilterMode;
+  hoursTime: string;
+  hoursEndTime: string;
   card: string;
   amenity: string;
   personal: PersonalFilter;

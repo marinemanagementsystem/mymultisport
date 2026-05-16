@@ -3,14 +3,19 @@ import type {
   BenefitFacility,
   FacilityResult,
   FilterState,
+  GoogleOpeningHours,
   GoogleRatingMatch,
   UserFacilityState,
   UserLocation,
 } from '../types';
 
 const BENEFIT_FACILITY_DETAIL_BASE = 'https://benefitsystems.com.tr/tesisler/';
+const DEFAULT_TIME_ZONE = 'Europe/Istanbul';
+const DAY_MINUTES = 24 * 60;
+const WEEK_MINUTES = 7 * DAY_MINUTES;
 
 const collator = new Intl.Collator('tr', { sensitivity: 'base' });
+const weekdayLabels = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
 export async function loadFacilities(): Promise<BenefitFacility[]> {
   const response = await fetch('/data/facilities-tr.json', {
@@ -78,6 +83,7 @@ export function filterAndSortFacilities(results: FacilityResult[], filters: Filt
     if (filters.minReviews > 0 && (rating?.matchStatus !== 'matched' || (rating.userRatingCount ?? 0) < filters.minReviews)) {
       return false;
     }
+    if (!matchesHoursFilter(result, filters)) return false;
     return true;
   });
 
@@ -176,8 +182,41 @@ export function getFacilityDetailUrl(facility: BenefitFacility): string {
   return new URL(facility.slug, BENEFIT_FACILITY_DETAIL_BASE).toString();
 }
 
-export function getGoogleMapsSearchUrl(facility: BenefitFacility): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${facility.lat},${facility.lng}`)}`;
+export function getGoogleMapsSearchUrl(facility: BenefitFacility, rating?: GoogleRatingMatch): string {
+  const params = new URLSearchParams({ api: '1' });
+  const query = buildMapsQuery(facility, rating);
+  params.set('query', query);
+
+  if (rating?.matchStatus === 'matched' && rating.placeId) {
+    params.set('query_place_id', rating.placeId);
+  }
+
+  return `https://www.google.com/maps/search/?${params.toString()}`;
+}
+
+export function formatOpeningHoursSummary(rating?: GoogleRatingMatch, now = new Date()): string | null {
+  const hours = getOpeningHours(rating);
+  if (!hours) return null;
+
+  const reference = getLocalWeekMinute(now, getHoursTimeZone(hours));
+  const periods = getNormalizedPeriods(hours);
+  const activePeriod = periods.length > 0 ? findContainingPeriod(periods, reference.weekMinute) : undefined;
+  const isOpen = activePeriod ? true : hours.openNow;
+
+  if (isOpen === true) {
+    return `Açık${activePeriod ? ` · ${formatWeeklyTime(activePeriod.close, reference.day)}'a kadar` : ''}`;
+  }
+
+  if (isOpen === false) {
+    const nextOpen = periods.length > 0 ? findNextOpeningMinute(periods, reference.weekMinute) : undefined;
+    return `Kapalı${nextOpen !== undefined ? ` · ${formatWeeklyTime(nextOpen, reference.day)} açılır` : ''}`;
+  }
+
+  return null;
+}
+
+export function getOpeningWeekdayDescriptions(rating?: GoogleRatingMatch): string[] {
+  return getOpeningHours(rating)?.weekdayDescriptions || [];
 }
 
 export function normalize(value: string | undefined | null): string {
@@ -201,6 +240,186 @@ function searchText(facility: BenefitFacility): string {
     ...facility.discounts,
     ...facility.cards,
   ].join(' '));
+}
+
+function buildMapsQuery(facility: BenefitFacility, rating?: GoogleRatingMatch): string {
+  const exactName = rating?.matchStatus === 'matched' && rating.displayName ? rating.displayName : facility.name;
+  const address = rating?.matchStatus === 'matched' && rating.formattedAddress ? rating.formattedAddress : facility.address;
+  const parts = [exactName, address, facility.city].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : `${facility.lat},${facility.lng}`;
+}
+
+function matchesHoursFilter(result: FacilityResult, filters: FilterState): boolean {
+  if (!filters.hoursMode) return true;
+
+  const hours = getOpeningHours(result.rating);
+  if (!hours) return false;
+
+  const periods = getNormalizedPeriods(hours);
+  const reference = getLocalWeekMinute(new Date(), getHoursTimeZone(hours));
+  const isOpenNow = periods.length > 0
+    ? Boolean(findContainingPeriod(periods, reference.weekMinute))
+    : hours.openNow;
+
+  if (filters.hoursMode === 'open_now') return isOpenNow === true;
+  if (filters.hoursMode === 'closed_now') return isOpenNow === false;
+  if (periods.length === 0) return false;
+
+  const startTime = parseTimeMinutes(filters.hoursTime);
+  const endTime = parseTimeMinutes(filters.hoursEndTime);
+  if (startTime === undefined) return false;
+
+  const dayStart = reference.day * DAY_MINUTES;
+
+  if (filters.hoursMode === 'open_at') {
+    return isOpenAtWeekMinute(periods, dayStart + startTime);
+  }
+
+  if (filters.hoursMode === 'open_until') {
+    let end = dayStart + startTime;
+    if (end <= reference.weekMinute) end += DAY_MINUTES;
+    return isOpenContinuouslyBetween(periods, reference.weekMinute, end);
+  }
+
+  if (filters.hoursMode === 'open_between') {
+    if (endTime === undefined) return false;
+    const start = dayStart + startTime;
+    let end = dayStart + endTime;
+    if (end <= start) end += DAY_MINUTES;
+    return isOpenContinuouslyBetween(periods, start, end);
+  }
+
+  return true;
+}
+
+function getOpeningHours(rating?: GoogleRatingMatch): GoogleOpeningHours | undefined {
+  if (!rating || rating.matchStatus !== 'matched') return undefined;
+
+  if (rating.openingHours) return rating.openingHours;
+
+  const current = rating.currentOpeningHours;
+  const regular = rating.regularOpeningHours;
+  if (!current && !regular) return undefined;
+
+  return {
+    openNow: current?.openNow ?? regular?.openNow,
+    nextCloseTime: current?.nextCloseTime,
+    nextOpenTime: current?.nextOpenTime,
+    weekdayDescriptions: current?.weekdayDescriptions?.length ? current.weekdayDescriptions : regular?.weekdayDescriptions,
+    periods: regular?.periods?.length ? regular.periods : current?.periods,
+    timeZone: current?.timeZone || regular?.timeZone || DEFAULT_TIME_ZONE,
+    utcOffsetMinutes: current?.utcOffsetMinutes ?? regular?.utcOffsetMinutes ?? rating.utcOffsetMinutes,
+  };
+}
+
+function getHoursTimeZone(hours: GoogleOpeningHours): string {
+  return hours.timeZone || DEFAULT_TIME_ZONE;
+}
+
+function getNormalizedPeriods(hours: GoogleOpeningHours): Array<{ open: number; close: number }> {
+  return (hours.periods || [])
+    .map((period) => {
+      if (!period.open || !isValidWeekPoint(period.open)) return null;
+      const open = (Number(period.open.day) * DAY_MINUTES) + (Number(period.open.hour) * 60) + Number(period.open.minute || 0);
+
+      if (!period.close) {
+        return { open: 0, close: WEEK_MINUTES };
+      }
+
+      if (!isValidWeekPoint(period.close)) return null;
+      let close = (Number(period.close.day) * DAY_MINUTES) + (Number(period.close.hour) * 60) + Number(period.close.minute || 0);
+      if (close <= open) close += WEEK_MINUTES;
+      return { open, close };
+    })
+    .filter((period): period is { open: number; close: number } => Boolean(period));
+}
+
+function isValidWeekPoint(point: { day?: number; hour?: number; minute?: number }): boolean {
+  return Number.isInteger(point.day)
+    && Number(point.day) >= 0
+    && Number(point.day) <= 6
+    && Number.isInteger(point.hour)
+    && Number(point.hour) >= 0
+    && Number(point.hour) <= 23
+    && (!point.minute || (Number.isInteger(point.minute) && Number(point.minute) >= 0 && Number(point.minute) <= 59));
+}
+
+function findContainingPeriod(periods: Array<{ open: number; close: number }>, weekMinute: number) {
+  for (const period of periods) {
+    for (const candidate of [weekMinute, weekMinute + WEEK_MINUTES]) {
+      if (period.open <= candidate && candidate < period.close) return period;
+    }
+  }
+  return undefined;
+}
+
+function findNextOpeningMinute(periods: Array<{ open: number; close: number }>, weekMinute: number): number | undefined {
+  let best: number | undefined;
+  for (const period of periods) {
+    for (const offset of [0, WEEK_MINUTES, WEEK_MINUTES * 2]) {
+      const candidate = period.open + offset;
+      if (candidate <= weekMinute) continue;
+      if (best === undefined || candidate < best) best = candidate;
+    }
+  }
+  return best;
+}
+
+function isOpenAtWeekMinute(periods: Array<{ open: number; close: number }>, weekMinute: number): boolean {
+  return Boolean(findContainingPeriod(periods, weekMinute));
+}
+
+function isOpenContinuouslyBetween(periods: Array<{ open: number; close: number }>, start: number, end: number): boolean {
+  if (end <= start) return false;
+  return periods.some((period) => [start, start + WEEK_MINUTES].some((candidateStart) => {
+    const candidateEnd = candidateStart + (end - start);
+    return period.open <= candidateStart && candidateEnd <= period.close;
+  }));
+}
+
+function parseTimeMinutes(value: string): number | undefined {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value || '');
+  if (!match) return undefined;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function getLocalWeekMinute(date: Date, timeZone: string): { day: number; weekMinute: number } {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(date);
+    const weekday = parts.find((part) => part.type === 'weekday')?.value || 'Sun';
+    const hourValue = Number(parts.find((part) => part.type === 'hour')?.value || '0');
+    const minute = Number(parts.find((part) => part.type === 'minute')?.value || '0');
+    const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday);
+    const hour = hourValue === 24 ? 0 : hourValue;
+    const normalizedDay = day >= 0 ? day : 0;
+    return {
+      day: normalizedDay,
+      weekMinute: normalizedDay * DAY_MINUTES + hour * 60 + minute,
+    };
+  } catch {
+    if (timeZone !== DEFAULT_TIME_ZONE) return getLocalWeekMinute(date, DEFAULT_TIME_ZONE);
+    const day = date.getDay();
+    return {
+      day,
+      weekMinute: day * DAY_MINUTES + date.getHours() * 60 + date.getMinutes(),
+    };
+  }
+}
+
+function formatWeeklyTime(weekMinute: number, referenceDay: number): string {
+  const normalized = ((weekMinute % WEEK_MINUTES) + WEEK_MINUTES) % WEEK_MINUTES;
+  const day = Math.floor(normalized / DAY_MINUTES);
+  const minuteOfDay = normalized % DAY_MINUTES;
+  const hour = Math.floor(minuteOfDay / 60);
+  const minute = minuteOfDay % 60;
+  const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  return day === referenceDay ? time : `${weekdayLabels[day]} ${time}`;
 }
 
 export function distanceKm(from: UserLocation, to: Pick<BenefitFacility, 'lat' | 'lng'>): number {

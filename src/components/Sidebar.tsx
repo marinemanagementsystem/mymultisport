@@ -34,6 +34,7 @@ import type {
   FilterState,
 } from '../types';
 import {
+  formatOpeningHoursSummary,
   getFacilityDetailUrl,
   getGoogleMapsSearchUrl,
   getPrimaryActivities,
@@ -55,6 +56,7 @@ interface SidebarProps {
   onOpenDetail: (id: string) => void;
   onLocate: () => void;
   onRefreshRatings: () => void;
+  canRefreshRatings: boolean;
   onTogglePersonal: (id: string, key: FacilityPersonalKey) => void;
   compareIds: string[];
   compareResults: FacilityResult[];
@@ -78,6 +80,7 @@ export default function Sidebar({
   onOpenDetail,
   onLocate,
   onRefreshRatings,
+  canRefreshRatings,
   onTogglePersonal,
   compareIds,
   compareResults,
@@ -106,6 +109,7 @@ export default function Sidebar({
     filters.radiusKm > 0 ? String(filters.radiusKm) : '',
     filters.minRating > 0 ? String(filters.minRating) : '',
     filters.minReviews > 0 ? String(filters.minReviews) : '',
+    filters.hoursMode,
     filters.hasPhoto ? 'photo' : '',
     filters.activeOnly ? 'active' : '',
     filters.internationalOnly ? 'international' : '',
@@ -130,6 +134,9 @@ export default function Sidebar({
       minRating: 0,
       minReviews: 0,
       radiusKm: 0,
+      hoursMode: '',
+      hoursTime: '23:00',
+      hoursEndTime: '23:00',
       card: '',
       amenity: '',
       personal: '',
@@ -141,11 +148,11 @@ export default function Sidebar({
 
   return (
     <aside className="flex h-full w-full flex-col border-r border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-primary)] shadow-[var(--shadow-panel)] md:w-[455px]">
-      <header className="border-b border-[var(--border-soft)] bg-[var(--surface-panel)] px-5 pb-4 pt-5">
+      <header className="border-b border-[var(--border-soft)] bg-[var(--surface-panel)] px-4 pb-3 pt-4 md:px-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-[1.55rem] font-black leading-none tracking-normal">MyMultiSport</h1>
-            <p className="mt-2 max-w-[28ch] text-sm leading-5 text-[var(--text-secondary)]">
+            <h1 className="text-[1.35rem] font-black leading-none tracking-normal md:text-[1.55rem]">MyMultiSport</h1>
+            <p className="mt-1.5 max-w-[28ch] text-[13px] leading-5 text-[var(--text-secondary)] md:text-sm">
               Türkiye tesislerini puan, yakınlık ve kişisel listelerle keşfet.
             </p>
           </div>
@@ -154,14 +161,14 @@ export default function Sidebar({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-4 gap-2">
+        <div className="mt-3 grid grid-cols-4 gap-2">
           <Stat label="Sonuç" value={stats.shown.toLocaleString('tr-TR')} />
           <Stat label="Puanlı" value={stats.matched.toLocaleString('tr-TR')} />
           <Stat label="Favori" value={stats.favorites.toLocaleString('tr-TR')} />
           <Stat label="Gittim" value={stats.visited.toLocaleString('tr-TR')} />
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-[var(--surface-muted)] p-1">
+        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-[var(--surface-muted)] p-1">
           <PanelButton active={panel === 'discover'} onClick={() => setPanel('discover')} label="Keşfet" icon={<Sparkles className="h-4 w-4" />} />
           <PanelButton active={panel === 'updates'} onClick={() => setPanel('updates')} label="Yenilikler" icon={<Clock3 className="h-4 w-4" />} />
           <PanelButton active={panel === 'compare'} onClick={() => setPanel('compare')} label={`Karşılaştır ${compareIds.length ? `(${compareIds.length})` : ''}`} icon={<Scale className="h-4 w-4" />} />
@@ -169,7 +176,7 @@ export default function Sidebar({
       </header>
 
       {panel === 'discover' && (
-      <div className="border-b border-[var(--border-soft)] bg-[var(--surface-panel)] p-3 md:hidden">
+      <div className="border-b border-[var(--border-soft)] bg-[var(--surface-panel)] p-3">
         <button
           type="button"
           onClick={() => setIsFilterPanelOpen((value) => !value)}
@@ -189,7 +196,7 @@ export default function Sidebar({
       )}
 
       {panel === 'discover' && (
-      <section className={`${isFilterPanelOpen ? 'block' : 'hidden'} border-b border-[var(--border-soft)] bg-[var(--surface-panel)] p-4 md:block`}>
+      <section className={`${isFilterPanelOpen ? 'block' : 'hidden'} app-scrollbar max-h-[56dvh] overflow-y-auto border-b border-[var(--border-soft)] bg-[var(--surface-panel)] p-3 pb-20 md:max-h-[calc(100dvh-15rem)] md:p-4`}>
         <div className="space-y-3">
           <label className="relative block">
             <span className="sr-only">Tesis, ilçe, olanak veya aktivite ara</span>
@@ -292,6 +299,15 @@ export default function Sidebar({
             />
           </div>
 
+          <HoursFilterControls
+            mode={filters.hoursMode}
+            time={filters.hoursTime}
+            endTime={filters.hoursEndTime}
+            onModeChange={(value) => updateFilter('hoursMode', value)}
+            onTimeChange={(value) => updateFilter('hoursTime', value)}
+            onEndTimeChange={(value) => updateFilter('hoursEndTime', value)}
+          />
+
           <div className="grid grid-cols-3 gap-2">
             <ToggleChip active={filters.activeOnly} icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Aktif" onClick={() => updateFilter('activeOnly', !filters.activeOnly)} />
             <ToggleChip active={filters.hasPhoto} icon={<ImageIcon className="h-3.5 w-3.5" />} label="Fotoğraflı" onClick={() => updateFilter('hasPhoto', !filters.hasPhoto)} />
@@ -303,9 +319,9 @@ export default function Sidebar({
               <LocateFixed className="h-4 w-4" />
               Konumum
             </button>
-            <button type="button" onClick={onRefreshRatings} disabled={isEnriching || results.length === 0} className="action-button primary disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" onClick={onRefreshRatings} disabled={isEnriching || !canRefreshRatings} className="action-button primary disabled:cursor-not-allowed disabled:opacity-60">
               {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Puanları al
+              Puan/saat al
             </button>
             <button type="button" onClick={resetFilters} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]" aria-label="Filtreleri temizle" title="Filtreleri temizle">
               <SlidersHorizontal className="h-4 w-4" />
@@ -322,7 +338,7 @@ export default function Sidebar({
       </section>
       )}
 
-      <section className="app-scrollbar flex-1 overflow-y-auto bg-[var(--app-bg)] p-3">
+      <section className="app-scrollbar flex-1 overflow-y-auto bg-[var(--app-bg)] p-2.5 md:p-3">
         {panel === 'updates' ? (
           <ChangesPanel summary={facilityChanges} />
         ) : panel === 'compare' ? (
@@ -338,7 +354,7 @@ export default function Sidebar({
             Bu filtrelerle tesis bulunamadı.
           </div>
         ) : (
-          <div className="flex flex-col gap-3 pb-24 md:pb-4">
+          <div className="flex flex-col gap-2.5 pb-20 md:gap-3 md:pb-4">
             {results.map((result) => (
               <FacilityCard
                 key={result.facility.id}
@@ -360,7 +376,7 @@ export default function Sidebar({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-raised)] px-2.5 py-2">
+    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-raised)] px-2.5 py-1.5 md:py-2">
       <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</div>
       <div className="mt-1 text-sm font-black">{value}</div>
     </div>
@@ -372,13 +388,66 @@ function PanelButton({ active, onClick, label, icon }: { active: boolean; onClic
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-black transition ${
+      className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-lg text-xs font-black transition md:h-9 ${
         active ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
       }`}
     >
       {icon}
       {label}
     </button>
+  );
+}
+
+function HoursFilterControls({
+  mode,
+  time,
+  endTime,
+  onModeChange,
+  onTimeChange,
+  onEndTimeChange,
+}: {
+  mode: FilterState['hoursMode'];
+  time: string;
+  endTime: string;
+  onModeChange: (value: FilterState['hoursMode']) => void;
+  onTimeChange: (value: string) => void;
+  onEndTimeChange: (value: string) => void;
+}) {
+  const needsTime = mode === 'open_at' || mode === 'open_until' || mode === 'open_between';
+  const needsEndTime = mode === 'open_between';
+
+  return (
+    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-raised)] p-2.5">
+      <Select
+        label="Çalışma saati"
+        value={mode}
+        onChange={(value) => onModeChange(value as FilterState['hoursMode'])}
+        options={[
+          ['', 'Tümü'],
+          ['open_now', 'Şu an açık'],
+          ['closed_now', 'Şu an kapalı'],
+          ['open_at', 'Bu saatte açık'],
+          ['open_until', 'Bu saate kadar açık'],
+          ['open_between', 'Saat aralığında açık'],
+        ]}
+      />
+      {needsTime && (
+        <div className={`mt-2 grid gap-2 ${needsEndTime ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <TimeField
+            label={mode === 'open_between' ? 'Başlangıç' : 'Saat'}
+            value={time}
+            onChange={onTimeChange}
+          />
+          {needsEndTime && (
+            <TimeField
+              label="Bitiş"
+              value={endTime}
+              onChange={onEndTimeChange}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -413,6 +482,24 @@ function Select({
           );
         })}
       </select>
+    </label>
+  );
+}
+
+function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-2][0-9]:[0-5][0-9]"
+        maxLength={5}
+        placeholder="23:00"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] px-2 text-sm font-semibold outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-ring)]"
+      />
     </label>
   );
 }
@@ -455,7 +542,8 @@ function FacilityCard({
   const activities = getPrimaryActivities(facility);
   const amenities = getPrimaryAmenities(facility);
   const ratingReady = rating?.matchStatus === 'matched';
-  const mapUrl = rating?.googleMapsUri || getGoogleMapsSearchUrl(facility);
+  const mapUrl = getGoogleMapsSearchUrl(facility, rating);
+  const hoursSummary = formatOpeningHoursSummary(rating) || (ratingReady ? 'Saat bilgisi yok' : 'Saat bekliyor');
 
   return (
     <article
@@ -464,22 +552,22 @@ function FacilityCard({
         selected ? 'border-[var(--accent)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-soft)]'
       }`}
     >
-      <div className="flex gap-3 p-3.5">
+      <div className="flex gap-3 p-3">
         {facility.thumbnail ? (
           <img
             src={facility.thumbnail}
             alt=""
             loading="lazy"
-            className="h-24 w-24 shrink-0 rounded-xl bg-[var(--surface-muted)] object-cover"
+            className="h-20 w-20 shrink-0 rounded-xl bg-[var(--surface-muted)] object-cover md:h-24 md:w-24"
           />
         ) : (
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-muted)] text-xs font-black text-[var(--text-tertiary)]">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-muted)] text-xs font-black text-[var(--text-tertiary)] md:h-24 md:w-24">
             MS
           </div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="line-clamp-2 text-[15px] font-black leading-snug">{facility.name}</h2>
+            <h2 className="line-clamp-2 text-sm font-black leading-snug md:text-[15px]">{facility.name}</h2>
             <div className="shrink-0 rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[10px] font-black text-[var(--text-secondary)]">
               {facility.cards.join('/') || 'Kart'}
             </div>
@@ -492,6 +580,10 @@ function FacilityCard({
             </span>
             {distanceKm !== undefined && <span>{distanceKm.toFixed(1)} km</span>}
             {facility.allowInternationalVisits && <span className="inline-flex items-center gap-1"><Globe2 className="h-3.5 w-3.5" /> Global</span>}
+          </div>
+          <div className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate text-xs font-bold text-[var(--accent-text)]">
+            <Clock3 className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{hoursSummary}</span>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -510,7 +602,7 @@ function FacilityCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-[var(--border-soft)] px-3.5 py-2.5">
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-[var(--border-soft)] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 text-sm">
           <Star className={`h-4 w-4 ${ratingReady ? 'fill-amber-400 text-amber-400' : 'text-[var(--text-tertiary)]'}`} />
           {ratingReady ? (
@@ -551,7 +643,7 @@ function FacilityCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-[var(--border-soft)] px-3.5 py-2.5">
+      <div className="flex items-center justify-between gap-3 border-t border-[var(--border-soft)] px-3 py-2">
         <button
           type="button"
           onClick={(event) => {

@@ -97,7 +97,7 @@ async function handleEnrichRatings(req, res) {
     const snapshot = await docRef.get();
     if (snapshot.exists) {
       const cached = markStaleIfNeeded(snapshot.data());
-      if (cached.matchStatus !== 'stale') {
+      if (cached.matchStatus !== 'stale' && hasExpectedCachedFields(cached)) {
         ratings.push(cached);
         continue;
       }
@@ -173,10 +173,15 @@ async function findGoogleRating(facility) {
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': [
         'places.id',
+        'places.businessStatus',
+        'places.currentOpeningHours',
         'places.displayName',
         'places.formattedAddress',
         'places.location',
         'places.rating',
+        'places.regularOpeningHours',
+        'places.timeZone',
+        'places.utcOffsetMinutes',
         'places.userRatingCount',
         'places.googleMapsUri',
       ].join(','),
@@ -220,9 +225,14 @@ async function findGoogleRating(facility) {
     placeId: best.place.id,
     displayName: best.place.displayName?.text,
     formattedAddress: best.place.formattedAddress,
+    businessStatus: best.place.businessStatus,
     rating: best.place.rating,
     userRatingCount: best.place.userRatingCount,
     googleMapsUri: best.place.googleMapsUri,
+    openingHours: buildOpeningHours(best.place),
+    currentOpeningHours: sanitizeOpeningHours(best.place.currentOpeningHours, best.place),
+    regularOpeningHours: sanitizeOpeningHours(best.place.regularOpeningHours, best.place),
+    utcOffsetMinutes: best.place.utcOffsetMinutes,
     location: best.place.location ? {
       lat: best.place.location.latitude,
       lng: best.place.location.longitude,
@@ -232,6 +242,72 @@ async function findGoogleRating(facility) {
     distanceMeters: Math.round(best.distanceMeters),
     updatedAt: new Date().toISOString(),
   };
+}
+
+function hasExpectedCachedFields(rating) {
+  return rating.matchStatus !== 'matched'
+    || Boolean(rating.openingHours || rating.currentOpeningHours || rating.regularOpeningHours);
+}
+
+function buildOpeningHours(place) {
+  const current = sanitizeOpeningHours(place.currentOpeningHours, place);
+  const regular = sanitizeOpeningHours(place.regularOpeningHours, place);
+  if (!current && !regular) return undefined;
+
+  return removeUndefined({
+    openNow: current?.openNow ?? regular?.openNow,
+    nextCloseTime: current?.nextCloseTime,
+    nextOpenTime: current?.nextOpenTime,
+    weekdayDescriptions: current?.weekdayDescriptions?.length ? current.weekdayDescriptions : regular?.weekdayDescriptions,
+    periods: regular?.periods?.length ? regular.periods : current?.periods,
+    timeZone: getPlaceTimeZone(place),
+    utcOffsetMinutes: place.utcOffsetMinutes,
+  });
+}
+
+function sanitizeOpeningHours(hours, place) {
+  if (!hours) return undefined;
+  const sanitized = removeUndefined({
+    openNow: typeof hours.openNow === 'boolean' ? hours.openNow : undefined,
+    nextCloseTime: hours.nextCloseTime,
+    nextOpenTime: hours.nextOpenTime,
+    weekdayDescriptions: Array.isArray(hours.weekdayDescriptions)
+      ? hours.weekdayDescriptions.filter((item) => typeof item === 'string')
+      : undefined,
+    periods: Array.isArray(hours.periods)
+      ? hours.periods.map(sanitizeOpeningPeriod).filter(Boolean)
+      : undefined,
+    timeZone: getPlaceTimeZone(place),
+    utcOffsetMinutes: place.utcOffsetMinutes,
+  });
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
+
+function sanitizeOpeningPeriod(period) {
+  if (!period || !period.open) return undefined;
+  return removeUndefined({
+    open: sanitizeOpeningPoint(period.open),
+    close: period.close ? sanitizeOpeningPoint(period.close) : undefined,
+  });
+}
+
+function sanitizeOpeningPoint(point) {
+  if (!point) return undefined;
+  return removeUndefined({
+    day: Number.isInteger(point.day) ? point.day : undefined,
+    hour: Number.isInteger(point.hour) ? point.hour : undefined,
+    minute: Number.isInteger(point.minute) ? point.minute : 0,
+  });
+}
+
+function getPlaceTimeZone(place) {
+  if (!place?.timeZone) return 'Europe/Istanbul';
+  if (typeof place.timeZone === 'string') return place.timeZone;
+  return place.timeZone.id || place.timeZone.name || 'Europe/Istanbul';
+}
+
+function removeUndefined(input) {
+  return Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined));
 }
 
 function scorePlace(facility, place) {

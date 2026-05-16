@@ -43,6 +43,9 @@ const DEFAULT_FILTERS: FilterState = {
   minRating: 0,
   minReviews: 0,
   radiusKm: 0,
+  hoursMode: '',
+  hoursTime: '23:00',
+  hoursEndTime: '23:00',
   card: '',
   amenity: '',
   personal: '',
@@ -149,6 +152,13 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   );
 
   const displayedResults = filteredResults.slice(0, MAX_RESULTS_FOR_UI);
+  const refreshableResults = useMemo(
+    () => filterAndSortFacilities(allResults, {
+      ...filters,
+      hoursMode: '',
+    }).slice(0, MAX_RESULTS_FOR_UI),
+    [allResults, filters],
+  );
 
   const stats = useMemo(() => {
     const matched = filteredResults.filter((result) => result.rating?.matchStatus === 'matched').length;
@@ -206,10 +216,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       return;
     }
 
-    const missing = displayedResults
+    const missing = refreshableResults
       .filter((result) => {
         const status = result.rating?.matchStatus;
-        return !status || status === 'stale';
+        return !status || status === 'stale' || (status === 'matched' && !result.rating?.openingHours);
       })
       .slice(0, ENRICH_BATCH_SIZE)
       .map((result) => result.facility);
@@ -234,7 +244,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         }
       })
       .finally(() => setIsEnriching(false));
-  }, [displayedResults]);
+  }, [refreshableResults]);
 
   const togglePersonal = useCallback((facilityId: string, key: FacilityPersonalKey) => {
     setUserStates((current) => toggleFacilityFlag(current, facilityId, key));
@@ -296,6 +306,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
           }}
           onLocate={locateUser}
           onRefreshRatings={refreshRatings}
+          canRefreshRatings={refreshableResults.length > 0}
           onTogglePersonal={togglePersonal}
           compareIds={compareIds}
           compareResults={compareResults}
@@ -348,7 +359,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       />
 
       <button
-        className="fixed bottom-6 left-1/2 z-30 inline-flex h-12 -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-6 text-sm font-bold text-white shadow-2xl transition hover:bg-[var(--accent-strong)] md:hidden"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-bold text-white shadow-2xl transition hover:bg-[var(--accent-strong)] md:hidden"
         onClick={() => setMobileView((view) => view === 'map' ? 'list' : 'map')}
       >
         {mobileView === 'map' ? (

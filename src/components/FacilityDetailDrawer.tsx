@@ -2,6 +2,7 @@ import {
   Activity,
   Bookmark,
   CheckCircle2,
+  Clock3,
   CreditCard,
   ExternalLink,
   Globe2,
@@ -16,9 +17,11 @@ import {
 import type { ReactNode } from 'react';
 import type { FacilityPersonalKey, FacilityResult } from '../types';
 import {
+  formatOpeningHoursSummary,
   getActivityNames,
   getFacilityDetailUrl,
   getGoogleMapsSearchUrl,
+  getOpeningWeekdayDescriptions,
 } from '../lib/facilities';
 
 interface FacilityDetailDrawerProps {
@@ -42,8 +45,10 @@ export default function FacilityDetailDrawer({
 
   const { facility, rating, distanceKm, userState } = result;
   const activities = getActivityNames(facility.activityGroups);
-  const mapUrl = rating?.googleMapsUri || getGoogleMapsSearchUrl(facility);
+  const mapUrl = getGoogleMapsSearchUrl(facility, rating);
   const ratingReady = rating?.matchStatus === 'matched';
+  const hoursSummary = formatOpeningHoursSummary(rating) || (ratingReady ? 'Saat bilgisi yok' : 'Saat bekliyor');
+  const weekdayDescriptions = getOpeningWeekdayDescriptions(rating);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40">
@@ -97,6 +102,23 @@ export default function FacilityDetailDrawer({
                   {card}
                 </span>
               ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-raised)] p-4">
+            <div className="flex items-start gap-3">
+              <Clock3 className="mt-0.5 h-5 w-5 text-[var(--accent-text)]" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-black">Çalışma saati</h3>
+                <p className="mt-1 text-sm font-bold text-[var(--text-secondary)]">{hoursSummary}</p>
+                {weekdayDescriptions.length > 0 && (
+                  <div className="mt-3 space-y-1 text-xs font-semibold leading-5 text-[var(--text-tertiary)]">
+                    {weekdayDescriptions.map((description) => (
+                      <div key={description}>{description}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 

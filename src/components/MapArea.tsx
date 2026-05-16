@@ -1,8 +1,8 @@
 import { AdvancedMarker, InfoWindow, Map as GoogleMap, Pin, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
-import { ExternalLink, MapPin, Star } from 'lucide-react';
+import { Clock3, ExternalLink, MapPin, Star } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import type { FacilityResult, UserLocation } from '../types';
-import { getGoogleMapsSearchUrl } from '../lib/facilities';
+import { formatOpeningHoursSummary, getGoogleMapsSearchUrl } from '../lib/facilities';
 
 interface MapAreaProps {
   results: FacilityResult[];
@@ -25,6 +25,7 @@ const MAX_CLUSTERED_RESULTS = 350;
 const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResult, isSelected: boolean, onClick: () => void }) => {
   const [markerRef, marker] = useAdvancedMarkerRef();
   const { facility, rating } = result;
+  const hoursSummary = formatOpeningHoursSummary(rating);
 
   const position = {
     lat: facility.lat,
@@ -64,9 +65,15 @@ const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResul
               <MapPin className="mr-1 mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
               <span className="line-clamp-2">{facility.city}, {facility.address}</span>
             </p>
+            {hoursSummary && (
+              <p className="mt-2 flex items-center text-xs font-semibold text-emerald-700">
+                <Clock3 className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
+                {hoursSummary}
+              </p>
+            )}
             <a
               className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
-              href={rating?.googleMapsUri || getGoogleMapsSearchUrl(facility)}
+              href={getGoogleMapsSearchUrl(facility, rating)}
               target="_blank"
               rel="noreferrer"
             >
