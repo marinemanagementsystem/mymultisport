@@ -153,7 +153,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     [allResults, filters],
   );
 
-  const displayedResults = filteredResults.slice(0, MAX_RESULTS_FOR_UI);
+  const displayedResults = useMemo(
+    () => filteredResults.slice(0, MAX_RESULTS_FOR_UI),
+    [filteredResults],
+  );
   const refreshableResults = useMemo(
     () => filterAndSortFacilities(allResults, {
       ...filters,
