@@ -16,7 +16,6 @@ import type {
 import {
   buildFacilityResults,
   filterAndSortFacilities,
-  getUniqueCities,
   loadFacilities,
 } from '../lib/facilities';
 import { loadFacilityChanges } from '../lib/facilityChanges';
@@ -51,11 +50,12 @@ const DEFAULT_FILTERS: FilterState = {
   amenity: '',
   personal: '',
   hasPhoto: false,
-  activeOnly: true,
+  activeOnly: false,
   internationalOnly: false,
 };
 
-const MAX_RESULTS_FOR_UI = 500;
+const INITIAL_LIST_RESULTS = 100;
+const LIST_RESULTS_INCREMENT = 100;
 
 function ratingNeedsRefresh(rating?: GoogleRatingMatch): boolean {
   const status = rating?.matchStatus;
@@ -80,6 +80,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [isDark, setIsDark] = useState(() => localStorage.getItem('mymultisport-theme') === 'dark');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
+  const [visibleListLimit, setVisibleListLimit] = useState(INITIAL_LIST_RESULTS);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -103,10 +104,6 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       .then((loaded) => {
         if (!mounted) return;
         setFacilities(loaded);
-        const cities = getUniqueCities(loaded);
-        if (cities.includes('İstanbul')) {
-          setFilters((current) => ({ ...current, city: 'İstanbul', radiusKm: 0 }));
-        }
       })
       .catch((cause) => {
         console.error(cause);
@@ -164,15 +161,19 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     [allResults, filters],
   );
 
-  const displayedResults = useMemo(
-    () => filteredResults.slice(0, MAX_RESULTS_FOR_UI),
-    [filteredResults],
+  useEffect(() => {
+    setVisibleListLimit(INITIAL_LIST_RESULTS);
+  }, [filters]);
+
+  const visibleListResults = useMemo(
+    () => filteredResults.slice(0, visibleListLimit),
+    [filteredResults, visibleListLimit],
   );
   const refreshableResults = useMemo(
     () => filterAndSortFacilities(allResults, {
       ...filters,
       hoursMode: '',
-    }).slice(0, MAX_RESULTS_FOR_UI),
+    }),
     [allResults, filters],
   );
   const pendingRefreshCount = useMemo(
@@ -293,10 +294,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   };
 
   useEffect(() => {
-    if (selectedPlaceId && !displayedResults.some((result) => result.facility.id === selectedPlaceId)) {
+    if (selectedPlaceId && !filteredResults.some((result) => result.facility.id === selectedPlaceId)) {
       setSelectedPlaceId(null);
     }
-  }, [displayedResults, selectedPlaceId]);
+  }, [filteredResults, selectedPlaceId]);
 
   const detailResult = detailPlaceId
     ? allResults.find((result) => result.facility.id === detailPlaceId)
@@ -310,7 +311,9 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       <div className={`absolute inset-0 z-20 md:relative md:block ${mobileView === 'list' ? 'block' : 'hidden'}`}>
         <Sidebar
           allFacilities={facilities}
-          results={displayedResults}
+          results={visibleListResults}
+          totalResults={filteredResults.length}
+          onLoadMore={() => setVisibleListLimit((current) => Math.min(current + LIST_RESULTS_INCREMENT, filteredResults.length))}
           filters={filters}
           setFilters={(nextFilters) => {
             setFilters(nextFilters);
@@ -343,11 +346,31 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       <main className={`relative flex-1 md:block ${mobileView === 'map' ? 'block' : 'hidden'}`}>
         {mapsAvailable ? (
           <MapArea
-            results={displayedResults}
+            results={filteredResults}
             selectedPlaceId={selectedPlaceId}
             onSelectPlace={(id) => setSelectedPlaceId(id)}
             isDark={isDark}
             userLocation={userLocation}
+            fitBoundsKey={[
+              filters.query,
+              filters.city,
+              filters.district,
+              filters.activity,
+              filters.card,
+              filters.amenity,
+              filters.personal,
+              filters.radiusKm,
+              filters.minRating,
+              filters.minReviews,
+              filters.hoursMode,
+              filters.hoursTime,
+              filters.hoursEndTime,
+              filters.hasPhoto,
+              filters.activeOnly,
+              filters.internationalOnly,
+              filters.sort,
+              filteredResults.length,
+            ].join('|')}
           />
         ) : (
           <MapKeyFallback />
@@ -364,13 +387,8 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
         {mapsAvailable && (
           <div className="absolute bottom-24 left-1/2 z-10 hidden -translate-x-1/2 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)]/95 px-4 py-2 text-xs font-bold text-[var(--text-secondary)] shadow-[var(--shadow-soft)] backdrop-blur md:block">
-            {t('main.pinsGrouped', { count: formatNumber(displayedResults.length) })}
-            {filteredResults.length > displayedResults.length
-              ? t('main.firstResultsFrom', {
-                total: formatNumber(filteredResults.length),
-                shown: formatNumber(displayedResults.length),
-              })
-              : ''}
+            {t('main.mapFilteredResults', { count: formatNumber(filteredResults.length) })}
+            {t('main.mapViewportNote')}
           </div>
         )}
       </main>

@@ -55,6 +55,8 @@ import {
 interface SidebarProps {
   allFacilities: BenefitFacility[];
   results: FacilityResult[];
+  totalResults: number;
+  onLoadMore: () => void;
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
   selectedPlaceId: string | null;
@@ -81,6 +83,8 @@ type SidebarPanel = 'discover' | 'updates' | 'compare';
 export default function Sidebar({
   allFacilities,
   results,
+  totalResults,
+  onLoadMore,
   filters,
   setFilters,
   selectedPlaceId,
@@ -152,10 +156,12 @@ export default function Sidebar({
       amenity: '',
       personal: '',
       hasPhoto: false,
-      activeOnly: true,
+      activeOnly: false,
       internationalOnly: false,
     });
   };
+
+  const canLoadMore = results.length < totalResults;
 
   return (
     <aside className="flex h-full w-full flex-col border-r border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-primary)] shadow-[var(--shadow-panel)] md:w-[455px]">
@@ -387,6 +393,23 @@ export default function Sidebar({
                 language={language}
               />
             ))}
+            {canLoadMore && (
+              <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-raised)] p-3 text-center">
+                <p className="text-xs font-bold text-[var(--text-tertiary)]">
+                  {t('status.showingResults', {
+                    shown: formatNumber(results.length),
+                    total: formatNumber(totalResults),
+                  })}
+                </p>
+                <button
+                  type="button"
+                  onClick={onLoadMore}
+                  className="mt-2 inline-flex h-10 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface-panel)] px-4 text-xs font-black text-[var(--text-primary)] transition hover:bg-[var(--surface-muted)]"
+                >
+                  {t('status.showMore')}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>

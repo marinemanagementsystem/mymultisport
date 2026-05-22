@@ -1,6 +1,6 @@
 import { AdvancedMarker, InfoWindow, Map as GoogleMap, Pin, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { Clock3, ExternalLink, MapPin, Star } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FacilityResult, UserLocation } from '../types';
 import { formatOpeningHoursSummary, getGoogleMapsSearchUrl } from '../lib/facilities';
 import { useI18n } from '../lib/i18n';
@@ -11,6 +11,7 @@ interface MapAreaProps {
   onSelectPlace: (id: string | null) => void;
   isDark: boolean;
   userLocation?: UserLocation;
+  fitBoundsKey: string;
 }
 
 interface MarkerCluster {
@@ -21,7 +22,7 @@ interface MarkerCluster {
 }
 
 const GRID_SIZE = 0.018;
-const MAX_CLUSTERED_RESULTS = 350;
+const MAX_VIEWPORT_RESULTS = 350;
 
 const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResult, isSelected: boolean, onClick: () => void }) => {
   const { language, t, formatCount } = useI18n();
@@ -108,11 +109,38 @@ function ClusterMarker({ cluster }: { cluster: MarkerCluster }) {
   );
 }
 
-export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDark, userLocation }: MapAreaProps) {
+export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDark, userLocation, fitBoundsKey }: MapAreaProps) {
   const { t } = useI18n();
   const map = useMap();
   const selected = results.find((result) => result.facility.id === selectedPlaceId);
-  const clusters = useMemo(() => buildClusters(results, selectedPlaceId), [results, selectedPlaceId]);
+  const [viewportBounds, setViewportBounds] = useState<google.maps.LatLngBoundsLiteral | null>(null);
+
+  const updateViewportBounds = useCallback(() => {
+    if (!map) return;
+    const bounds = map.getBounds();
+    if (!bounds) return;
+    const northEast = bounds.getNorthEast();
+    const southWest = bounds.getSouthWest();
+    setViewportBounds({
+      north: northEast.lat(),
+      east: northEast.lng(),
+      south: southWest.lat(),
+      west: southWest.lng(),
+    });
+  }, [map]);
+
+  const viewportResults = useMemo(
+    () => chooseViewportResults(results, viewportBounds, selected, selectedPlaceId),
+    [results, selected, selectedPlaceId, viewportBounds],
+  );
+  const clusters = useMemo(() => buildClusters(viewportResults, selectedPlaceId), [viewportResults, selectedPlaceId]);
+
+  useEffect(() => {
+    if (!map) return;
+    const listener = map.addListener('idle', updateViewportBounds);
+    updateViewportBounds();
+    return () => listener.remove();
+  }, [map, updateViewportBounds]);
 
   useEffect(() => {
     if (!map || !selected) return;
@@ -130,7 +158,7 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
     const bounds = new google.maps.LatLngBounds();
     results.slice(0, 200).forEach((result) => bounds.extend({ lat: result.facility.lat, lng: result.facility.lng }));
     map.fitBounds(bounds, 60);
-  }, [map, results, userLocation]);
+  }, [fitBoundsKey, map, userLocation]);
 
   return (
     <GoogleMap
@@ -171,11 +199,40 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
   );
 }
 
+function chooseViewportResults(
+  results: FacilityResult[],
+  bounds: google.maps.LatLngBoundsLiteral | null,
+  selected: FacilityResult | undefined,
+  selectedPlaceId: string | null,
+): FacilityResult[] {
+  const boundedResults = bounds
+    ? results.filter((result) => isWithinBounds(result, bounds))
+    : results;
+  return includeSelectedResult(boundedResults.slice(0, MAX_VIEWPORT_RESULTS), selected, selectedPlaceId);
+}
+
+function includeSelectedResult(
+  results: FacilityResult[],
+  selected: FacilityResult | undefined,
+  selectedPlaceId: string | null,
+): FacilityResult[] {
+  if (!selected || !selectedPlaceId || results.some((result) => result.facility.id === selectedPlaceId)) {
+    return results;
+  }
+  return [selected, ...results.slice(0, Math.max(MAX_VIEWPORT_RESULTS - 1, 0))];
+}
+
+function isWithinBounds(result: FacilityResult, bounds: google.maps.LatLngBoundsLiteral): boolean {
+  const { lat, lng } = result.facility;
+  if (lat < bounds.south || lat > bounds.north) return false;
+  if (bounds.west <= bounds.east) return lng >= bounds.west && lng <= bounds.east;
+  return lng >= bounds.west || lng <= bounds.east;
+}
+
 function buildClusters(results: FacilityResult[], selectedPlaceId: string | null): MarkerCluster[] {
   const selected = selectedPlaceId ? results.find((result) => result.facility.id === selectedPlaceId) : undefined;
   const buckets = new Map<string, FacilityResult[]>();
   const clusterInput = results
-    .slice(0, MAX_CLUSTERED_RESULTS)
     .filter((result) => result.facility.id !== selectedPlaceId);
 
   for (const result of clusterInput) {
