@@ -28,6 +28,7 @@ export interface BenefitFacility {
   desired: boolean;
   vcOnly: boolean;
   allowInternationalVisits: boolean;
+  sourceStatus?: 'current' | 'historical';
 }
 
 export interface GoogleRatingMatch {
@@ -147,8 +148,11 @@ export interface FacilityChangeSummary {
   sourceUrl: string;
   previousCount: number;
   currentCount: number;
+  publicSourceCount?: number;
+  historicalCount?: number;
   newFacilities: FacilityChangeItem[];
   removedFacilities: FacilityChangeItem[];
+  historicalFacilities?: FacilityChangeItem[];
   updatedFacilities: FacilityUpdatedChange[];
 }
 

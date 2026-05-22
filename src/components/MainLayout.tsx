@@ -57,6 +57,11 @@ const DEFAULT_FILTERS: FilterState = {
 
 const MAX_RESULTS_FOR_UI = 500;
 
+function ratingNeedsRefresh(rating?: GoogleRatingMatch): boolean {
+  const status = rating?.matchStatus;
+  return !status || status === 'stale' || (status === 'matched' && !rating.openingHours);
+}
+
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
   const { t, formatNumber } = useI18n();
   const [facilities, setFacilities] = useState<BenefitFacility[]>([]);
@@ -70,6 +75,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [userLocation, setUserLocation] = useState<UserLocation | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [isEnriching, setIsEnriching] = useState(false);
+  const [isRatingCacheLoading, setIsRatingCacheLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('mymultisport-theme') === 'dark');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -121,11 +127,14 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   }, []);
 
   useEffect(() => {
-    if (!RATINGS_API_AVAILABLE) return;
-    if (facilities.length === 0) return;
+    if (!RATINGS_API_AVAILABLE || facilities.length === 0) {
+      setIsRatingCacheLoading(false);
+      return;
+    }
 
     const cacheAbort = new AbortController();
     const allIds = facilities.map((facility) => facility.id);
+    setIsRatingCacheLoading(true);
 
     getAllRatings(allIds, {
       signal: cacheAbort.signal,
@@ -138,10 +147,12 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       if (cacheAbort.signal.aborted) return;
       console.warn(cause);
       setError(t('errors.cacheReadFailed'));
+    }).finally(() => {
+      if (!cacheAbort.signal.aborted) setIsRatingCacheLoading(false);
     });
 
     return () => cacheAbort.abort();
-  }, [facilities]);
+  }, [facilities, t]);
 
   const allResults = useMemo(
     () => buildFacilityResults(facilities, ratings, userLocation, userStates),
@@ -163,6 +174,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       hoursMode: '',
     }).slice(0, MAX_RESULTS_FOR_UI),
     [allResults, filters],
+  );
+  const pendingRefreshCount = useMemo(
+    () => refreshableResults.filter((result) => ratingNeedsRefresh(result.rating)).length,
+    [refreshableResults],
   );
 
   const stats = useMemo(() => {
@@ -222,10 +237,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     }
 
     const missing = refreshableResults
-      .filter((result) => {
-        const status = result.rating?.matchStatus;
-        return !status || status === 'stale' || (status === 'matched' && !result.rating?.openingHours);
-      })
+      .filter((result) => ratingNeedsRefresh(result.rating))
       .slice(0, ENRICH_BATCH_SIZE)
       .map((result) => result.facility);
 
@@ -313,13 +325,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
           }}
           onLocate={locateUser}
           onRefreshRatings={refreshRatings}
-          canRefreshRatings={refreshableResults.length > 0}
+          canRefreshRatings={pendingRefreshCount > 0}
           onTogglePersonal={togglePersonal}
           compareIds={compareIds}
           compareResults={compareResults}
           onToggleCompare={toggleCompare}
           isLoading={isLoading}
           isEnriching={isEnriching}
+          isRatingCacheLoading={isRatingCacheLoading}
+          pendingRefreshCount={pendingRefreshCount}
           error={error}
           stats={stats}
           facilityChanges={facilityChanges}

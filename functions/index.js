@@ -89,9 +89,8 @@ async function handleEnrichRatings(req, res) {
     return;
   }
 
-  await assertDailyQuota(facilities.length);
-
   const ratings = [];
+  let googleLookupCount = 0;
   for (const facility of facilities) {
     const docRef = db.collection(CACHE_COLLECTION).doc(facility.id);
     const snapshot = await docRef.get();
@@ -103,12 +102,14 @@ async function handleEnrichRatings(req, res) {
       }
     }
 
+    await assertDailyQuota(googleLookupCount + 1);
     const rating = await findGoogleRating(facility);
+    googleLookupCount += 1;
     await docRef.set(rating);
     ratings.push(rating);
   }
 
-  await incrementDailyUsage(ratings.filter((rating) => rating.updatedAt).length);
+  await incrementDailyUsage(googleLookupCount);
   res.json({ ratings });
 }
 

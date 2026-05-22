@@ -69,6 +69,8 @@ interface SidebarProps {
   onToggleCompare: (id: string) => void;
   isLoading: boolean;
   isEnriching: boolean;
+  isRatingCacheLoading: boolean;
+  pendingRefreshCount: number;
   error?: string | null;
   stats: FacilityStats;
   facilityChanges: FacilityChangeSummary | null;
@@ -93,6 +95,8 @@ export default function Sidebar({
   onToggleCompare,
   isLoading,
   isEnriching,
+  isRatingCacheLoading,
+  pendingRefreshCount,
   error,
   stats,
   facilityChanges,
@@ -173,7 +177,7 @@ export default function Sidebar({
 
         <div className="mt-3 grid grid-cols-4 gap-2">
           <Stat label={t('stats.results')} value={formatNumber(stats.shown)} />
-          <Stat label={t('stats.rated')} value={formatNumber(stats.matched)} />
+          <Stat label={t('stats.rated')} value={isRatingCacheLoading ? t('stats.ratingsLoading') : formatNumber(stats.matched)} />
           <Stat label={t('stats.favorite')} value={formatNumber(stats.favorites)} />
           <Stat label={t('stats.visited')} value={formatNumber(stats.visited)} />
         </div>
@@ -329,10 +333,15 @@ export default function Sidebar({
               <LocateFixed className="h-4 w-4" />
               {t('filters.myLocation')}
             </button>
-            <button type="button" onClick={onRefreshRatings} disabled={isEnriching || !canRefreshRatings} className="action-button primary disabled:cursor-not-allowed disabled:opacity-60">
-              {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {t('filters.fetchRatingsHours')}
-            </button>
+            <div className="min-w-0">
+              <button type="button" onClick={onRefreshRatings} disabled={isEnriching || !canRefreshRatings} className="action-button primary w-full disabled:cursor-not-allowed disabled:opacity-60">
+                {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {t('filters.fetchRatingsHours')}
+              </button>
+              <div className="mt-1 truncate text-center text-[10px] font-bold text-[var(--text-tertiary)]">
+                {t('filters.pendingRatings', { count: formatNumber(pendingRefreshCount) })}
+              </div>
+            </div>
             <button type="button" onClick={resetFilters} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]" aria-label={t('filters.clear')} title={t('filters.clear')}>
               <SlidersHorizontal className="h-4 w-4" />
             </button>
@@ -615,6 +624,11 @@ function FacilityCard({
               {facility.cards.join('/') || t('facility.cardFallback')}
             </div>
           </div>
+          {facility.sourceStatus === 'historical' && (
+            <div className="mt-1.5 inline-flex rounded-full bg-[var(--warning-bg)] px-2 py-0.5 text-[10px] font-black text-[var(--warning-text)]">
+              {t('facility.historical')}
+            </div>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--text-tertiary)]">
             <span className="inline-flex items-center gap-1">
@@ -754,7 +768,8 @@ function ChangesPanel({ summary }: { summary: FacilityChangeSummary | null }) {
     );
   }
 
-  const totalChanges = summary.newFacilities.length + summary.removedFacilities.length + summary.updatedFacilities.length;
+  const historicalFacilities = summary.historicalFacilities || [];
+  const totalChanges = summary.newFacilities.length + historicalFacilities.length + summary.updatedFacilities.length;
 
   return (
     <div className="space-y-3 pb-24 md:pb-4">
@@ -767,9 +782,15 @@ function ChangesPanel({ summary }: { summary: FacilityChangeSummary | null }) {
             current: formatNumber(summary.currentCount),
           })}
         </p>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">
+          {t('updates.sourceBreakdown', {
+            public: formatNumber(summary.publicSourceCount ?? summary.currentCount),
+            historical: formatNumber(summary.historicalCount ?? historicalFacilities.length),
+          })}
+        </p>
       </div>
       <ChangeSection title={t('updates.newFacilities')} items={summary.newFacilities} />
-      <ChangeSection title={t('updates.removedFacilities')} items={summary.removedFacilities} />
+      <ChangeSection title={t('updates.historicalFacilities')} items={historicalFacilities} />
       <UpdatedSection items={summary.updatedFacilities} />
     </div>
   );

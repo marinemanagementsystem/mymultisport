@@ -28,9 +28,32 @@ if (!Array.isArray(rawFacilities)) {
   throw new Error('Beklenen tesis datası array değil.');
 }
 
-const normalized = rawFacilities
+const publicFacilities = rawFacilities
   .filter(isValidFacility)
-  .map((facility) => ({
+  .map((facility) => normalizeFacility(facility, 'current'));
+
+const previous = await readPreviousFacilities();
+const publicIds = new Set(publicFacilities.map((facility) => facility.id));
+const historicalFacilities = previous
+  .filter((facility) => !publicIds.has(facility.id))
+  .map((facility) => normalizeFacility(facility, 'historical'));
+const normalized = [...publicFacilities, ...historicalFacilities]
+  .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+const existingSummary = await readExistingChangeSummary();
+const freshChanges = buildChangeSummary(previous, normalized, publicFacilities, historicalFacilities);
+const changes = chooseChangeSummary(freshChanges, existingSummary);
+
+await mkdir(new URL('../public/data/', import.meta.url), { recursive: true });
+await writeFile(OUTPUT_PATH, `${JSON.stringify(normalized)}\n`);
+await writeFile(CHANGE_PATH, `${JSON.stringify(changes, null, 2)}\n`);
+
+console.log(`Synced ${normalized.length} facilities to ${OUTPUT_PATH.pathname}`);
+console.log(`Public source: ${publicFacilities.length}; historical preserved: ${historicalFacilities.length}`);
+console.log(`Wrote facility change summary to ${CHANGE_PATH.pathname}`);
+
+function normalizeFacility(facility, sourceStatus) {
+  return {
     id: facility.id,
     name: facility.name,
     slug: facility.slug || '',
@@ -48,19 +71,9 @@ const normalized = rawFacilities
     desired: Boolean(facility.desired),
     vcOnly: Boolean(facility.vcOnly),
     allowInternationalVisits: Boolean(facility.allowInternationalVisits),
-  }));
-
-const previous = await readPreviousFacilities();
-const existingSummary = await readExistingChangeSummary();
-const freshChanges = buildChangeSummary(previous, normalized);
-const changes = chooseChangeSummary(freshChanges, existingSummary);
-
-await mkdir(new URL('../public/data/', import.meta.url), { recursive: true });
-await writeFile(OUTPUT_PATH, `${JSON.stringify(normalized)}\n`);
-await writeFile(CHANGE_PATH, `${JSON.stringify(changes, null, 2)}\n`);
-
-console.log(`Synced ${normalized.length} facilities to ${OUTPUT_PATH.pathname}`);
-console.log(`Wrote facility change summary to ${CHANGE_PATH.pathname}`);
+    sourceStatus,
+  };
+}
 
 async function readPreviousFacilities() {
   try {
@@ -83,8 +96,14 @@ async function readExistingChangeSummary() {
 }
 
 function chooseChangeSummary(freshChanges, existingSummary) {
-  if (changeCount(freshChanges) > 0) return freshChanges;
-  if (existingSummary && changeCount(existingSummary) > 0 && existingSummary.currentCount === freshChanges.currentCount) {
+  if (publicChangeCount(freshChanges) > 0) return freshChanges;
+  if (
+    existingSummary
+    && changeCount(existingSummary) > 0
+    && existingSummary.currentCount === freshChanges.currentCount
+    && (existingSummary.publicSourceCount ?? freshChanges.publicSourceCount) === freshChanges.publicSourceCount
+    && (existingSummary.historicalCount ?? freshChanges.historicalCount) === freshChanges.historicalCount
+  ) {
     return existingSummary;
   }
   return freshChanges;
@@ -92,25 +111,25 @@ function chooseChangeSummary(freshChanges, existingSummary) {
 
 function changeCount(summary) {
   return (summary.newFacilities?.length || 0)
+    + (summary.historicalFacilities?.length || 0)
+    + (summary.updatedFacilities?.length || 0);
+}
+
+function publicChangeCount(summary) {
+  return (summary.newFacilities?.length || 0)
     + (summary.removedFacilities?.length || 0)
     + (summary.updatedFacilities?.length || 0);
 }
 
-function buildChangeSummary(previousFacilities, currentFacilities) {
+function buildChangeSummary(previousFacilities, mergedFacilities, publicFacilities, historicalFacilities) {
   const previousById = new Map(previousFacilities.map((facility) => [facility.id, facility]));
-  const currentById = new Map(currentFacilities.map((facility) => [facility.id, facility]));
 
-  const newFacilities = currentFacilities
+  const newFacilities = publicFacilities
     .filter((facility) => !previousById.has(facility.id))
     .map(toChangeItem)
     .slice(0, 80);
 
-  const removedFacilities = previousFacilities
-    .filter((facility) => !currentById.has(facility.id))
-    .map(toChangeItem)
-    .slice(0, 80);
-
-  const updatedFacilities = currentFacilities
+  const updatedFacilities = publicFacilities
     .map((facility) => {
       const previous = previousById.get(facility.id);
       if (!previous) return null;
@@ -124,9 +143,12 @@ function buildChangeSummary(previousFacilities, currentFacilities) {
     generatedAt: new Date().toISOString(),
     sourceUrl: SOURCE_URL,
     previousCount: previousFacilities.length,
-    currentCount: currentFacilities.length,
+    currentCount: mergedFacilities.length,
+    publicSourceCount: publicFacilities.length,
+    historicalCount: historicalFacilities.length,
     newFacilities,
-    removedFacilities,
+    removedFacilities: [],
+    historicalFacilities: historicalFacilities.map(toChangeItem).slice(0, 80),
     updatedFacilities,
   };
 }

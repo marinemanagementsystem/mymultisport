@@ -1,40 +1,16 @@
 {
-  "generatedAt": "2026-05-16T18:43:49.227Z",
+  "generatedAt": "2026-05-22T19:47:27.413Z",
   "sourceUrl": "https://benefitsystems.com.tr/facilities-tr.json",
-  "previousCount": 4174,
-  "currentCount": 4179,
+  "previousCount": 4179,
+  "currentCount": 4202,
+  "publicSourceCount": 4162,
+  "historicalCount": 40,
   "newFacilities": [
     {
-      "id": "1227TR",
-      "name": "Atılgan Fight Academy",
-      "city": "Ankara",
-      "cityDistrict": "Çankaya",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Kick Box"
-      ]
-    },
-    {
-      "id": "5665TR",
-      "name": "Atölye Tez",
+      "id": "5577TR",
+      "name": "Ayyıldız Pilates Studio",
       "city": "İstanbul",
-      "cityDistrict": "Üsküdar",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Yoga"
-      ]
-    },
-    {
-      "id": "5609TR",
-      "name": "Dynamic Pilates Bahçelievler",
-      "city": "İstanbul",
-      "cityDistrict": "Bahçelievler",
+      "cityDistrict": "Sarıyer",
       "cards": [
         "Plus"
       ],
@@ -43,60 +19,22 @@
       ]
     },
     {
-      "id": "5631TR",
-      "name": "Egzersiz Atölyesi",
-      "city": "İstanbul",
-      "cityDistrict": "Üsküdar",
+      "id": "5507TR",
+      "name": "Bench Sports Club",
+      "city": "Tekirdağ",
+      "cityDistrict": "Süleymanpaşa",
       "cards": [
         "Plus"
-      ],
-      "activities": [
-        "Mat Pilates",
-        "Reformer Pilates"
-      ]
-    },
-    {
-      "id": "5565TR",
-      "name": "Fit Couple Personal Coaching",
-      "city": "İstanbul",
-      "cityDistrict": "Bayrampaşa",
-      "cards": [
-        "Plus"
-      ],
-      "activities": [
-        "Fonksiyonel Antrenman"
-      ]
-    },
-    {
-      "id": "5624TR",
-      "name": "Fitness Form Club 2",
-      "city": "İstanbul",
-      "cityDistrict": "Sancaktepe",
-      "cards": [
-        "Plus",
-        "Classic"
       ],
       "activities": [
         "Fitness & Gym"
       ]
     },
     {
-      "id": "5611TR",
-      "name": "FizyoDynamic Pilates Bahçelievler",
+      "id": "5566TR",
+      "name": "Çağatay Akdemir Sağlıklı Yaşam Merkezi",
       "city": "İstanbul",
-      "cityDistrict": "Bahçelievler",
-      "cards": [
-        "Plus"
-      ],
-      "activities": [
-        "Reformer Pilates"
-      ]
-    },
-    {
-      "id": "5564TR",
-      "name": "Joy 8 Art&Pilates",
-      "city": "İstanbul",
-      "cityDistrict": "Bayrampaşa",
+      "cityDistrict": "Şişli",
       "cards": [
         "Plus"
       ],
@@ -106,94 +44,89 @@
       ]
     },
     {
-      "id": "4484TR",
-      "name": "MaxHitBoxing Manisa",
-      "city": "Manisa",
-      "cityDistrict": "Yunusemre",
+      "id": "5674TR",
+      "name": "DEPO Training Society",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
       "cards": [
         "Plus"
       ],
       "activities": [
-        "Boks"
+        "Crossfit",
+        "Fonksiyonel Antrenman"
       ]
     },
     {
-      "id": "5552TR",
-      "name": "Moonlight Pilates Sancaktepe",
-      "city": "İstanbul",
-      "cityDistrict": "Sancaktepe",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Reformer Pilates"
-      ]
-    },
-    {
-      "id": "5540TR",
-      "name": "Nimbus Pilates",
-      "city": "İstanbul",
-      "cityDistrict": "Bayrampaşa",
-      "cards": [
-        "Plus"
-      ],
-      "activities": [
-        "Kadınlara Özel Hizmet",
-        "Reformer Pilates"
-      ]
-    },
-    {
-      "id": "5431TR",
-      "name": "Nivo Pilates Yenibosna",
-      "city": "İstanbul",
-      "cityDistrict": "Bahçelievler",
-      "cards": [
-        "Plus"
-      ],
-      "activities": [
-        "Reformer Pilates"
-      ]
-    }
-  ],
-  "removedFacilities": [
-    {
-      "id": "2959TR",
-      "name": "Ankara Atlıspor Kulübü",
-      "city": "Ankara",
-      "cityDistrict": "Çankaya",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Binicilik"
-      ]
-    },
-    {
-      "id": "1333TR",
-      "name": "Aslı Başar Yoga Okulu",
+      "id": "1662TR",
+      "name": "FIT AND ART STUDIO",
       "city": "İzmir",
-      "cityDistrict": "Bornova",
+      "cityDistrict": "Menderes",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
+        "Fonksiyonel Antrenman",
+        "Mat Pilates",
+        "Reformer Pilates",
         "Yoga"
       ]
     },
     {
-      "id": "1894TR",
-      "name": "Benefit Slimming Studio",
-      "city": "İzmir",
-      "cityDistrict": "Konak",
+      "id": "5689TR",
+      "name": "Fittown Fitness Center & Concept",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
-        "Fonksiyonel Antrenman"
+        "Boks",
+        "Crossfit",
+        "Crunch",
+        "Fitness & Gym",
+        "Havuz"
+      ]
+    },
+    {
+      "id": "5555TR",
+      "name": "Fizyo Nola Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Kağıthane",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "2325TR",
+      "name": "Fizyostep",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5634TR",
+      "name": "Gym Tower Club",
+      "city": "Tekirdağ",
+      "cityDistrict": "Süleymanpaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Crossfit",
+        "Fitness & Gym"
       ]
     },
     {
@@ -210,126 +143,413 @@
       ]
     },
     {
-      "id": "4006TR",
-      "name": "Nunu Pilates Studio",
+      "id": "5742TR",
+      "name": "Kübra Pilates Studio",
+      "city": "Kocaeli",
+      "cityDistrict": "Başiskele",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5680TR",
+      "name": "Lotus Spor Salonu",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5699TR",
+      "name": "MACFit Kayseri 38. Cadde",
+      "city": "Kayseri",
+      "cityDistrict": "Melikgazi",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ]
+    },
+    {
+      "id": "5629TR",
+      "name": "Nanshe Studio",
+      "city": "İstanbul",
+      "cityDistrict": "Ümraniye",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Boks",
+        "Crossfit",
+        "Crunch",
+        "Fitness & Gym",
+        "Fonksiyonel Antrenman"
+      ]
+    },
+    {
+      "id": "5613TR",
+      "name": "Pr Fitness Çapa",
+      "city": "İstanbul",
+      "cityDistrict": "Fatih",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "5666TR",
+      "name": "Punch&Flow Training Studio",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "HIIT"
+      ]
+    },
+    {
+      "id": "5505TR",
+      "name": "REF Sport Center Çarşı",
+      "city": "Tekirdağ",
+      "cityDistrict": "Süleymanpaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Mat Pilates",
+        "Pilates"
+      ]
+    },
+    {
+      "id": "5503TR",
+      "name": "REF Sport Center Değirmenaltı",
+      "city": "Tekirdağ",
+      "cityDistrict": "Süleymanpaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Latin Dansları",
+        "Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5667TR",
+      "name": "Ritim Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "1454TR",
+      "name": "Sarnıç Tenis Kulübü",
       "city": "İzmir",
-      "cityDistrict": "Karaburun",
+      "cityDistrict": "Gaziemir",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Tenis"
+      ]
+    },
+    {
+      "id": "5514TR",
+      "name": "Shine Pilates Eryaman",
+      "city": "Ankara",
+      "cityDistrict": "Etimesgut",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5668TR",
+      "name": "X Studio Lifeexpress",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Body Fit",
+        "Crunch",
+        "Cycling",
+        "Streching",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5625TR",
+      "name": "Yoga Gülşen Stüdyo Akademi",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Kadınlara Özel Hizmet",
+        "Yoga"
+      ]
+    }
+  ],
+  "removedFacilities": [],
+  "historicalFacilities": [
+    {
+      "id": "4148TR",
+      "name": "ALSANCAK REFORMER PİLATES-Pınar Pamuk",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
       "cards": [
         "Plus"
       ],
       "activities": [
         "Fonksiyonel Antrenman",
         "Mat Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "3747TR",
+      "name": "Bayan Spor Bağcılar",
+      "city": "İstanbul",
+      "cityDistrict": "Bağcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
         "Reformer Pilates"
       ]
     },
     {
-      "id": "5080TR",
-      "name": "Piramit Fitness Center",
-      "city": "Afyonkarahisar",
-      "cityDistrict": "Merkez",
+      "id": "921TR",
+      "name": "Best Premium Fitness",
+      "city": "İzmir",
+      "cityDistrict": "Bergama",
       "cards": [
-        "Plus"
+        "Plus",
+        "Classic"
       ],
       "activities": [
         "Fitness & Gym"
       ]
     },
     {
-      "id": "4683TR",
-      "name": "Sekizfit",
-      "city": "İstanbul",
-      "cityDistrict": "Çekmeköy",
+      "id": "1676TR",
+      "name": "Black Squad Personal Training Studio",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
       "cards": [
-        "Plus"
+        "Plus",
+        "Classic"
       ],
       "activities": [
-        "Fonksiyonel Antrenman",
         "Reformer Pilates"
       ]
-    }
-  ],
-  "updatedFacilities": [
+    },
     {
-      "id": "3090TR",
-      "name": "B&T Sports",
+      "id": "4867TR",
+      "name": "Carbon Gym Bağlıca",
       "city": "Ankara",
-      "cityDistrict": "Çankaya",
+      "cityDistrict": "Etimesgut",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "982TR",
+      "name": "Concept PT Turkey",
+      "city": "İzmir",
+      "cityDistrict": "Güzelbahçe",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
         "Fitness & Gym"
-      ],
-      "changedFields": [
-        "district"
       ]
     },
     {
-      "id": "5601TR",
-      "name": "GG Poligon Gebze",
-      "city": "Kocaeli",
-      "cityDistrict": "",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Airsoft"
-      ],
-      "changedFields": [
-        "district"
-      ]
-    },
-    {
-      "id": "2933TR",
-      "name": "GYMLENİX Spor Salonu",
-      "city": "İstanbul",
-      "cityDistrict": "Sultanbeyli",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Fitness & Gym"
-      ],
-      "changedFields": [
-        "district",
-        "international"
-      ]
-    },
-    {
-      "id": "5479TR",
-      "name": "Heal Inn Pilates",
-      "city": "Ankara",
-      "cityDistrict": "Keçiören",
+      "id": "2092TR",
+      "name": "Diyetisyen Öznur Adak",
+      "city": "İzmir",
+      "cityDistrict": "Bornova",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
         "Reformer Pilates"
-      ],
-      "changedFields": [
-        "district"
       ]
     },
     {
-      "id": "5531TR",
-      "name": "İstanbul Surf House",
+      "id": "2924TR",
+      "name": "DİYETİSYEN TUTKU PELİNSU SEVEN",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Andulasyon Terapi",
+        "EMS Fitness"
+      ]
+    },
+    {
+      "id": "3008TR",
+      "name": "Dyt. Nida Akpınar",
       "city": "İstanbul",
-      "cityDistrict": "Beykoz",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Roll Shape",
+        "Vacu Activ"
+      ]
+    },
+    {
+      "id": "2723TR",
+      "name": "Filiform Şube",
+      "city": "İzmir",
+      "cityDistrict": "Aliağa",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Aerial Yoga - Hamak Yogası",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4850TR",
+      "name": "Fit Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
       "cards": [
         "Plus"
       ],
       "activities": [
-        "Deniz Bisikleti",
-        "Kano",
-        "Paddle Board"
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "3580TR",
+      "name": "FitSlim Spor Merkezi",
+      "city": "İstanbul",
+      "cityDistrict": "Fatih",
+      "cards": [
+        "Plus"
       ],
-      "changedFields": [
-        "district"
+      "activities": [
+        "Buhar Odası",
+        "Fitness & Gym",
+        "Sauna"
+      ]
+    },
+    {
+      "id": "547TR",
+      "name": "Fittown Fitness Center & Concept",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Crossfit",
+        "Crunch",
+        "Fitness & Gym",
+        "Havuz",
+        "HIIT"
+      ]
+    },
+    {
+      "id": "2575TR",
+      "name": "Fizyo Vadi",
+      "city": "İzmir",
+      "cityDistrict": "Buca",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Yoga",
+        "Zumba"
+      ]
+    },
+    {
+      "id": "3594TR",
+      "name": "Fizyo-SYNERGY",
+      "city": "İzmir",
+      "cityDistrict": "Gaziemir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "2782TR",
+      "name": "Güreş Okulu İstanbul Şişli",
+      "city": "İstanbul",
+      "cityDistrict": "Şişli",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "BJJ- Brezilian Jiu Jitsu",
+        "Güreş",
+        "Jiu Jitsu",
+        "MMA"
+      ]
+    },
+    {
+      "id": "1772TR",
+      "name": "İzmir Golf Club",
+      "city": "İzmir",
+      "cityDistrict": "Urla",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Golf"
       ]
     },
     {
@@ -343,16 +563,375 @@
       ],
       "activities": [
         "Tenis"
+      ]
+    },
+    {
+      "id": "2816TR",
+      "name": "Lidya Sardes Hotel Thermal & Spa",
+      "city": "Manisa",
+      "cityDistrict": "Salihli",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Hamam",
+        "Sauna"
+      ]
+    },
+    {
+      "id": "4826TR",
+      "name": "Lily Pilates & Hamak Yoga",
+      "city": "Eskişehir",
+      "cityDistrict": "Tepebaşı",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "2644TR",
+      "name": "Mady Dans Alsancak",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Bachata",
+        "Bale",
+        "Halk Dansları",
+        "Hip-Hop",
+        "Oryantal"
+      ]
+    },
+    {
+      "id": "4216TR",
+      "name": "Muscle Factory Sport Center",
+      "city": "Ankara",
+      "cityDistrict": "Yenimahalle",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "1386TR",
+      "name": "Nexa Pilates & Training",
+      "city": "İzmir",
+      "cityDistrict": "Buca",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Crossfit",
+        "Fonksiyonel Antrenman",
+        "Reformer Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "1660TR",
+      "name": "Oscar GYM",
+      "city": "İzmir",
+      "cityDistrict": "Menemen",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "3853TR",
+      "name": "OVERFİT",
+      "city": "İstanbul",
+      "cityDistrict": "Çekmeköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Boks",
+        "Kick Box",
+        "Muay Thai",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4994TR",
+      "name": "Oxygen Gym Karşıyaka",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "4743TR",
+      "name": "Önel Spor Kulübü",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Boks",
+        "Fitness & Gym",
+        "Kick Box",
+        "Tekvando"
+      ]
+    },
+    {
+      "id": "5390TR",
+      "name": "Padel Zone Social Club",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Padel"
+      ]
+    },
+    {
+      "id": "1495TR",
+      "name": "Paris Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "3035TR",
+      "name": "Physio Global Sağlıklı Yaşam Merkezi",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Andulasyon Terapi",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "920TR",
+      "name": "Prime Athletics",
+      "city": "İzmir",
+      "cityDistrict": "Çiğli",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "Kardiyo",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4402TR",
+      "name": "Prime Fitness",
+      "city": "Balıkesir",
+      "cityDistrict": "Altıeylül",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ]
+    },
+    {
+      "id": "873TR",
+      "name": "SDF SPORT Pilates & Ems Studio",
+      "city": "İzmir",
+      "cityDistrict": "Menderes",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Aerial Yoga - Hamak Yogası",
+        "Fitness & Gym",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "2547TR",
+      "name": "Slimtime Zayıflama Merkezi",
+      "city": "İstanbul",
+      "cityDistrict": "Pendik",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Roll Shape",
+        "Vacu Activ"
+      ]
+    },
+    {
+      "id": "685TR",
+      "name": "Sportscity Plus Balçova",
+      "city": "İzmir",
+      "cityDistrict": "Balçova",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman"
+      ]
+    },
+    {
+      "id": "3785TR",
+      "name": "The Change Studio",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Total Body Workout"
+      ]
+    },
+    {
+      "id": "1257TR",
+      "name": "Urhan Academy Ataşehir",
+      "city": "İstanbul",
+      "cityDistrict": "Ataşehir",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Boks",
+        "Kick Box",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "1362TR",
+      "name": "Yoga Kalp",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Aerial Yoga - Hamak Yogası",
+        "Hamile Yoga",
+        "Hatha Yoga",
+        "Vinyasa Yoga",
+        "Yin Yoga"
+      ]
+    },
+    {
+      "id": "1679TR",
+      "name": "Zenith Studio",
+      "city": "İzmir",
+      "cityDistrict": "Güzelbahçe",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5291TR",
+      "name": "Zorlu Est Yoga",
+      "city": "İstanbul",
+      "cityDistrict": "Ümraniye",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Nefes Egzersizi",
+        "Yoga"
+      ]
+    }
+  ],
+  "updatedFacilities": [
+    {
+      "id": "5516TR",
+      "name": "Arem Gym Club",
+      "city": "İstanbul",
+      "cityDistrict": "Beykoz",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ],
+      "changedFields": [
+        "name"
+      ]
+    },
+    {
+      "id": "3687TR",
+      "name": "Bob Pilates",
+      "city": "İzmir",
+      "cityDistrict": "Gaziemir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
       ],
       "changedFields": [
         "status"
       ]
     },
     {
-      "id": "5123TR",
-      "name": "Sista Pilates",
+      "id": "2636TR",
+      "name": "Evrensel Tenis",
+      "city": "Bursa",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Tenis"
+      ],
+      "changedFields": [
+        "district",
+        "international"
+      ]
+    },
+    {
+      "id": "4275TR",
+      "name": "Fizyofiplus FFP Pilates Mecidiyeköy",
       "city": "İstanbul",
-      "cityDistrict": "Beşiktaş",
+      "cityDistrict": "",
       "cards": [
         "Plus",
         "Classic"
@@ -361,20 +940,39 @@
         "Reformer Pilates"
       ],
       "changedFields": [
-        "address"
+        "district",
+        "international"
       ]
     },
     {
-      "id": "643TR",
-      "name": "TTFit Abidinpaşa",
+      "id": "2287TR",
+      "name": "FlexPlus Fizyoterapi ve Reformer Pilates Merkezi",
       "city": "Ankara",
-      "cityDistrict": "Mamak",
+      "cityDistrict": "Etimesgut",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
-        "Crossfit"
+        "Mat Pilates",
+        "Reformer Pilates"
+      ],
+      "changedFields": [
+        "cards"
+      ]
+    },
+    {
+      "id": "986TR",
+      "name": "Form Fiz Fizyoterapi Danışmanlık",
+      "city": "İstanbul",
+      "cityDistrict": "",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Pilates",
+        "Reformer Pilates"
       ],
       "changedFields": [
         "district",
@@ -382,20 +980,1186 @@
       ]
     },
     {
-      "id": "4973TR",
-      "name": "Yay Academy",
+      "id": "5601TR",
+      "name": "GG Poligon Gebze",
+      "city": "Kocaeli",
+      "cityDistrict": "Gebze",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Airsoft"
+      ],
+      "changedFields": [
+        "district"
+      ]
+    },
+    {
+      "id": "784TR",
+      "name": "Gymotion Bakırköy",
       "city": "İstanbul",
-      "cityDistrict": "",
+      "cityDistrict": "Bakırköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Pilates"
+      ],
+      "changedFields": [
+        "name"
+      ]
+    },
+    {
+      "id": "4278TR",
+      "name": "Lithium Sports Center",
+      "city": "İzmir",
+      "cityDistrict": "Torbalı",
       "cards": [
         "Plus"
       ],
       "activities": [
-        "BJJ- Brezilian Jiu Jitsu",
-        "Boks",
-        "Kick Box"
+        "Fitness & Gym"
       ],
       "changedFields": [
-        "district",
+        "status"
+      ]
+    },
+    {
+      "id": "3081TR",
+      "name": "MACFit 365 AVM",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3099TR",
+      "name": "MACFit 42 Maslak",
+      "city": "İstanbul",
+      "cityDistrict": "Sarıyer",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3536TR",
+      "name": "MACFit Acıbadem Excellence Suryapı",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3133TR",
+      "name": "MACFit Adana 01 Burda",
+      "city": "Adana",
+      "cityDistrict": "Seyhan",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3135TR",
+      "name": "MACFit Adana Optimum",
+      "city": "Adana",
+      "cityDistrict": "Yüreğir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3535TR",
+      "name": "MACFit Airport AVM",
+      "city": "İstanbul",
+      "cityDistrict": "Bakırköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3139TR",
+      "name": "MACFit Akbatı",
+      "city": "İstanbul",
+      "cityDistrict": "Esenyurt",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3141TR",
+      "name": "MACFit Akyaka Park",
+      "city": "İstanbul",
+      "cityDistrict": "Ümraniye",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3142TR",
+      "name": "MACFit Altunizade",
+      "city": "İstanbul",
+      "cityDistrict": "Üsküdar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3144TR",
+      "name": "MACFit Anadoluhisarı",
+      "city": "İstanbul",
+      "cityDistrict": "Beykoz",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3087TR",
+      "name": "MACFit Ankamall",
+      "city": "Ankara",
+      "cityDistrict": "Yenimahalle",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "4751TR",
+      "name": "MACFit Ankara Ned Çiçekli",
+      "city": "Ankara",
+      "cityDistrict": "Keçiören",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3114TR",
+      "name": "MACFit Antalya Erasta",
+      "city": "Antalya",
+      "cityDistrict": "Kepez",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3112TR",
+      "name": "MACFit Antalya Lara Carrefour",
+      "city": "Antalya",
+      "cityDistrict": "Muratpaşa",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3170TR",
+      "name": "MACFit Arenapark",
+      "city": "İstanbul",
+      "cityDistrict": "Küçükçekmece",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3092TR",
+      "name": "MACFit Armada",
+      "city": "Ankara",
+      "cityDistrict": "Yenimahalle",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3457TR",
+      "name": "MACFit Ataşehir Bulvar 216",
+      "city": "İstanbul",
+      "cityDistrict": "Ataşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3171TR",
+      "name": "MACFit Atlaspark",
+      "city": "İstanbul",
+      "cityDistrict": "Sultanbeyli",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3172TR",
+      "name": "MACFit Axis İstanbul",
+      "city": "İstanbul",
+      "cityDistrict": "Eyüp",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3178TR",
+      "name": "MACFit Axis Kağıthane",
+      "city": "İstanbul",
+      "cityDistrict": "Kağıthane",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3182TR",
+      "name": "MACFit Bağcılar Meydan",
+      "city": "İstanbul",
+      "cityDistrict": "Bağcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3213TR",
+      "name": "MACFit Bahçeşehir Park",
+      "city": "İstanbul",
+      "cityDistrict": "Başakşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3187TR",
+      "name": "MACFit Bakırköy Migros",
+      "city": "İstanbul",
+      "cityDistrict": "Bakırköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3119TR",
+      "name": "MACFit Balçova Kipa",
+      "city": "İzmir",
+      "cityDistrict": "Balçova",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3093TR",
+      "name": "MACFit Balgat Nev 201",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3190TR",
+      "name": "MACFit Beylikdüzü Metrohome",
+      "city": "İstanbul",
+      "cityDistrict": "Beylikdüzü",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3193TR",
+      "name": "MACFit Biz Cevahir",
+      "city": "İstanbul",
+      "cityDistrict": "Eyüp",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3196TR",
+      "name": "MACFit Bomonti",
+      "city": "İstanbul",
+      "cityDistrict": "Şişli",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3094TR",
+      "name": "MACFit Buca",
+      "city": "İzmir",
+      "cityDistrict": "Buca",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "4750TR",
+      "name": "MACFit Bulvar Loft",
+      "city": "Ankara",
+      "cityDistrict": "Gölbaşı",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3711TR",
+      "name": "MACFit Bursa Kent Meydanı",
+      "city": "Bursa",
+      "cityDistrict": "Osmangazi",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "4399TR",
+      "name": "MACFit Bursa Konum Balat",
+      "city": "Bursa",
+      "cityDistrict": "Nilüfer",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3115TR",
+      "name": "MACFit Bursa Özlüce",
+      "city": "Bursa",
+      "cityDistrict": "Nilüfer",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3116TR",
+      "name": "MACFit Bursa Podyumpark",
+      "city": "Bursa",
+      "cityDistrict": "Nilüfer",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3199TR",
+      "name": "MACFit Buyaka",
+      "city": "İstanbul",
+      "cityDistrict": "Ümraniye",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3203TR",
+      "name": "MACFit Cadde",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3095TR",
+      "name": "MACFit Cepa",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3204TR",
+      "name": "MACFit Cevahir",
+      "city": "İstanbul",
+      "cityDistrict": "Şişli",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3206TR",
+      "name": "MACFit City Center",
+      "city": "İstanbul",
+      "cityDistrict": "Esenyurt",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3212TR",
+      "name": "MACFit Çamsan Park",
+      "city": "İstanbul",
+      "cityDistrict": "Sancaktepe",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3208TR",
+      "name": "MACFit Çengelköy Park",
+      "city": "İstanbul",
+      "cityDistrict": "Üsküdar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3117TR",
+      "name": "MACFit Denizli Teraspark",
+      "city": "Denizli",
+      "cityDistrict": "Merkezefendi",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3120TR",
+      "name": "MACFit Edirne Margi",
+      "city": "Edirne",
+      "cityDistrict": "Merkez",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3130TR",
+      "name": "MACFit Ege Perla",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3097TR",
+      "name": "MACFit Eryaman",
+      "city": "Ankara",
+      "cityDistrict": "Etimesgut",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "4122TR",
+      "name": "MACFit Esenyurt Cumhuriyet",
+      "city": "İstanbul",
+      "cityDistrict": "Esenyurt",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3124TR",
+      "name": "MACFit Eskişehir",
+      "city": "Eskişehir",
+      "cityDistrict": "Tepebaşı",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3098TR",
+      "name": "MACFit Etlik",
+      "city": "Ankara",
+      "cityDistrict": "Keçiören",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3210TR",
+      "name": "MACFit Flatofis Haliç",
+      "city": "İstanbul",
+      "cityDistrict": "Eyüp",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3118TR",
+      "name": "MACFit Forum Diyarbakır",
+      "city": "Diyarbakır",
+      "cityDistrict": "Yenişehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3211TR",
+      "name": "MACFit Fulya",
+      "city": "İstanbul",
+      "cityDistrict": "Şişli",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3122TR",
+      "name": "MACFit Gaziantep Şehitkamil",
+      "city": "Gaziantep",
+      "cityDistrict": "Şehitkamil",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3145TR",
+      "name": "MACFit Gaziemir Optimum",
+      "city": "İzmir",
+      "cityDistrict": "Gaziemir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3100TR",
+      "name": "MACFit Gordion",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3205TR",
+      "name": "MACFit Göztepe Loft",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3903TR",
+      "name": "MACFit Göztepe Optimum",
+      "city": "İstanbul",
+      "cityDistrict": "Ataşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3202TR",
+      "name": "MACFit Güneşli",
+      "city": "İstanbul",
+      "cityDistrict": "Bağcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3198TR",
+      "name": "MACFit Hiltown",
+      "city": "İstanbul",
+      "cityDistrict": "Maltepe",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "5306TR",
+      "name": "MACFit Historia AVM",
+      "city": "İstanbul",
+      "cityDistrict": "Fatih",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3181TR",
+      "name": "MACFit Istmarina",
+      "city": "İstanbul",
+      "cityDistrict": "Kartal",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3209TR",
+      "name": "MACFit İstiklal AVM",
+      "city": "İstanbul",
+      "cityDistrict": "Beyoğlu",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "4125TR",
+      "name": "MACFit İzmit Arasta Park",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3176TR",
+      "name": "MACFit Kale Center",
+      "city": "İstanbul",
+      "cityDistrict": "Güngören",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3175TR",
+      "name": "MACFit Kartal",
+      "city": "İstanbul",
+      "cityDistrict": "Kartal",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3194TR",
+      "name": "MACFit Kayaşehir",
+      "city": "İstanbul",
+      "cityDistrict": "Başakşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3188TR",
+      "name": "MACFit Kazasker",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3147TR",
+      "name": "MACFit Kıbrıs Şehitleri",
+      "city": "İzmir",
+      "cityDistrict": "Konak",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3132TR",
+      "name": "MACFit Kidsmall",
+      "city": "İzmir",
+      "cityDistrict": "Bornova",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3127TR",
+      "name": "MACFit Kocaeli 41 Burda",
+      "city": "Kocaeli",
+      "cityDistrict": "İzmit",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3128TR",
+      "name": "MACFit Kocaeli Gebze Center",
+      "city": "Kocaeli",
+      "cityDistrict": "Gebze",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
+        "international"
+      ]
+    },
+    {
+      "id": "3106TR",
+      "name": "MACFit Konutkent",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Grup Dersleri"
+      ],
+      "changedFields": [
         "international"
       ]
     }
