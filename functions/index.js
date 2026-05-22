@@ -220,7 +220,7 @@ async function findGoogleRating(facility) {
     return buildStatus(facility, 'not_found');
   }
 
-  const status = best.matchScore >= 72 ? 'matched' : 'ambiguous';
+  const status = best.matchScore >= 68 ? 'matched' : 'ambiguous';
   return {
     facilityId: facility.id,
     placeId: best.place.id,
@@ -246,8 +246,10 @@ async function findGoogleRating(facility) {
 }
 
 function hasExpectedCachedFields(rating) {
-  return rating.matchStatus !== 'matched'
-    || Boolean(rating.openingHours || rating.currentOpeningHours || rating.regularOpeningHours);
+  if (rating.matchStatus === 'matched') {
+    return Boolean(rating.openingHours || rating.currentOpeningHours || rating.regularOpeningHours);
+  }
+  return rating.matchStatus === 'not_found';
 }
 
 function buildOpeningHours(place) {

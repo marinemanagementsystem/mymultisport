@@ -59,7 +59,7 @@ const LIST_RESULTS_INCREMENT = 100;
 
 function ratingNeedsRefresh(rating?: GoogleRatingMatch): boolean {
   const status = rating?.matchStatus;
-  return !status || status === 'stale' || (status === 'matched' && !rating.openingHours);
+  return !status || status === 'stale' || status === 'ambiguous' || (status === 'matched' && !rating.openingHours);
 }
 
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
