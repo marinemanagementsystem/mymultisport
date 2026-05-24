@@ -52,7 +52,46 @@ export interface GoogleRatingMatch {
   matchScore?: number;
   distanceMeters?: number;
   updatedAt?: string;
+  googleFetchedAt?: string;
+  cacheUpdatedAt?: string;
+  snapshotUpdatedAt?: string;
+  facilityFingerprint?: string;
+  refreshReason?: string;
   error?: string;
+}
+
+export interface RatingsSnapshotMeta {
+  rebuiltAt?: string;
+  shardCount: number;
+  ratingCount: number;
+  matchedCount: number;
+  hoursCount: number;
+}
+
+export interface RatingsSnapshotResponse {
+  meta: RatingsSnapshotMeta;
+  ratings: GoogleRatingMatch[];
+}
+
+export interface AdminUsageCounter {
+  count: number;
+  limit: number;
+  updatedAt?: string;
+}
+
+export interface AdminRatingsStatus {
+  usage: {
+    daily: AdminUsageCounter;
+    monthly: AdminUsageCounter;
+  };
+  limits: {
+    batch: number;
+    daily: number;
+    monthly: number;
+    snapshotShards: number;
+  };
+  snapshot: RatingsSnapshotMeta | null;
+  time: string;
 }
 
 export interface GoogleOpeningHours {

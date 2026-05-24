@@ -7,8 +7,8 @@ MultiSport Türkiye tesis listesini Benefit Systems public JSON datasından yük
 1. **Maps JavaScript API:** MMSAI3 projesinde etkinleştirildi ve otomatik API Key oluşturuldu.
 2. **Places API:** Spor salonu arama özelliği için etkinleştirildi.
 3. **Kotalar (Hard Cap):**
-   - Maps JavaScript API: Günlük maksimum 1,000 Map loads (harita yüklemesi).
-   - Places API: Günlük maksimum 1,000 Requests (istek).
+   - Maps JavaScript API: Günlük maksimum 300 Map loads (harita yüklemesi).
+   - Places API / Text Search: Günlük maksimum 25 Requests (istek).
 4. **Bütçe Uyarısı:** "MMSAI3 Maps API Butce Uyarisi" adıyla ₺100 bütçe oluşturuldu. Bütçe %50, %90 ve %100 dolduğunda e-posta uyarısı gönderilecektir.
 5. **Secret / Ortam Değişkenleri:** API Key, AI Studio'ya `GOOGLE_MAPS_PLATFORM_KEY` secret'ı olarak kaydedildi ve uygulama otomatik olarak yeniden derlendi.
 
@@ -53,13 +53,23 @@ Functions API:
 
 - `GET /api/health`
 - `GET /api/ratings?ids=...`
-- `POST /api/ratings/enrich`
+- `GET /api/ratings/snapshot`
+- `POST /api/ratings/enrich` (admin auth gerekir)
+- `GET /api/admin/ratings/status` (admin auth gerekir)
+- `POST /api/admin/ratings/enrich` (admin auth gerekir)
+- `POST /api/admin/ratings/snapshot/rebuild` (admin auth gerekir)
 
-Google Places secret:
+Normal kullanıcılar Google Places API'ye doğrudan veya dolaylı refresh çağrısı yapmaz. Uygulama önce Firestore snapshot cache'ini okur; snapshot yoksa mevcut `/api/ratings?ids=...` cache endpoint'ine düşer. Google Places sadece admin panelinden, düşük günlük/aylık kota içinde çalışır.
+
+Google Places ve admin secret'ları:
 
 ```bash
 firebase functions:secrets:set GOOGLE_MAPS_PLATFORM_KEY --project mymultisport-bc9c5
+firebase functions:secrets:set RATINGS_ADMIN_USERNAME --project mymultisport-bc9c5
+firebase functions:secrets:set RATINGS_ADMIN_PASSWORD --project mymultisport-bc9c5
 ```
+
+Varsayılan maliyet koruma limitleri Functions içinde `DAILY_ENRICH_LIMIT=25`, `MONTHLY_ENRICH_LIMIT=900`, `MAX_ENRICH_BATCH=25` olarak uygulanır. Google Cloud tarafında da Places/Text Search günlük kotası 25, Maps JavaScript günlük kotası 300 olacak şekilde ayrıca sınırlandırılmalıdır.
 
 Deploy:
 

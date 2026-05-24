@@ -18,9 +18,9 @@ import {
   Loader2,
   LocateFixed,
   MapPin,
-  RefreshCw,
   Scale,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Star,
@@ -63,16 +63,13 @@ interface SidebarProps {
   onSelectPlace: (id: string) => void;
   onOpenDetail: (id: string) => void;
   onLocate: () => void;
-  onRefreshRatings: () => void;
-  canRefreshRatings: boolean;
+  onOpenAdmin: () => void;
   onTogglePersonal: (id: string, key: FacilityPersonalKey) => void;
   compareIds: string[];
   compareResults: FacilityResult[];
   onToggleCompare: (id: string) => void;
   isLoading: boolean;
-  isEnriching: boolean;
   isRatingCacheLoading: boolean;
-  pendingRefreshCount: number;
   error?: string | null;
   stats: FacilityStats;
   facilityChanges: FacilityChangeSummary | null;
@@ -91,16 +88,13 @@ export default function Sidebar({
   onSelectPlace,
   onOpenDetail,
   onLocate,
-  onRefreshRatings,
-  canRefreshRatings,
+  onOpenAdmin,
   onTogglePersonal,
   compareIds,
   compareResults,
   onToggleCompare,
   isLoading,
-  isEnriching,
   isRatingCacheLoading,
-  pendingRefreshCount,
   error,
   stats,
   facilityChanges,
@@ -178,6 +172,16 @@ export default function Sidebar({
             <div className="rounded-full border border-[var(--accent-soft)] bg-[var(--accent-muted)] px-3 py-1 text-xs font-black text-[var(--accent-text)]">
               {formatCount(stats.total, 'facility')}
             </div>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] px-3 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              aria-label="Admin"
+              title="Admin"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Admin
+            </button>
           </div>
         </div>
 
@@ -334,20 +338,11 @@ export default function Sidebar({
             <ToggleChip active={filters.internationalOnly} icon={<Globe2 className="h-3.5 w-3.5" />} label={t('filters.global')} onClick={() => updateFilter('internationalOnly', !filters.internationalOnly)} />
           </div>
 
-          <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+          <div className="grid grid-cols-[1fr_auto] gap-2">
             <button type="button" onClick={onLocate} className="action-button secondary">
               <LocateFixed className="h-4 w-4" />
               {t('filters.myLocation')}
             </button>
-            <div className="min-w-0">
-              <button type="button" onClick={onRefreshRatings} disabled={isEnriching || !canRefreshRatings} className="action-button primary w-full disabled:cursor-not-allowed disabled:opacity-60">
-                {isEnriching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                {t('filters.fetchRatingsHours')}
-              </button>
-              <div className="mt-1 truncate text-center text-[10px] font-bold text-[var(--text-tertiary)]">
-                {t('filters.pendingRatings', { count: formatNumber(pendingRefreshCount) })}
-              </div>
-            </div>
             <button type="button" onClick={resetFilters} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface-raised)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]" aria-label={t('filters.clear')} title={t('filters.clear')}>
               <SlidersHorizontal className="h-4 w-4" />
             </button>

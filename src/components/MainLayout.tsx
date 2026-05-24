@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { List, MapIcon, Maximize, Minimize, Moon, Sun } from 'lucide-react';
+import AdminPanel from './AdminPanel';
 import FacilityDetailDrawer from './FacilityDetailDrawer';
 import MapArea from './MapArea';
 import Sidebar from './Sidebar';
@@ -20,10 +21,8 @@ import {
 } from '../lib/facilities';
 import { loadFacilityChanges } from '../lib/facilityChanges';
 import {
-  enrichRatings,
-  ENRICH_BATCH_SIZE,
   getAllRatings,
-  RatingsApiError,
+  getRatingsSnapshot,
   RATINGS_API_AVAILABLE,
 } from '../lib/ratingsApi';
 import {
@@ -57,11 +56,6 @@ const DEFAULT_FILTERS: FilterState = {
 const INITIAL_LIST_RESULTS = 100;
 const LIST_RESULTS_INCREMENT = 100;
 
-function ratingNeedsRefresh(rating?: GoogleRatingMatch): boolean {
-  const status = rating?.matchStatus;
-  return !status || status === 'stale' || status === 'ambiguous' || (status === 'matched' && !rating.openingHours);
-}
-
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
   const { t, formatNumber } = useI18n();
   const [facilities, setFacilities] = useState<BenefitFacility[]>([]);
@@ -74,13 +68,13 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [userLocation, setUserLocation] = useState<UserLocation | undefined>();
   const [isLoading, setIsLoading] = useState(true);
-  const [isEnriching, setIsEnriching] = useState(false);
   const [isRatingCacheLoading, setIsRatingCacheLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('mymultisport-theme') === 'dark');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [visibleListLimit, setVisibleListLimit] = useState(INITIAL_LIST_RESULTS);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -133,20 +127,30 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     const allIds = facilities.map((facility) => facility.id);
     setIsRatingCacheLoading(true);
 
-    getAllRatings(allIds, {
-      signal: cacheAbort.signal,
-      onChunk: (chunk) => {
+    getRatingsSnapshot({ signal: cacheAbort.signal })
+      .then((snapshot) => {
         if (cacheAbort.signal.aborted) return;
-        if (Object.keys(chunk).length === 0) return;
-        setRatings((current) => ({ ...current, ...chunk }));
-      },
-    }).catch((cause) => {
-      if (cacheAbort.signal.aborted) return;
-      console.warn(cause);
-      setError(t('errors.cacheReadFailed'));
-    }).finally(() => {
-      if (!cacheAbort.signal.aborted) setIsRatingCacheLoading(false);
-    });
+        if (snapshot.ratings.length === 0) throw new Error('empty_rating_snapshot');
+        setRatings(Object.fromEntries(snapshot.ratings.map((rating) => [rating.facilityId, rating])));
+      })
+      .catch(async (snapshotCause) => {
+        if (cacheAbort.signal.aborted) return;
+        console.warn(snapshotCause);
+        await getAllRatings(allIds, {
+          signal: cacheAbort.signal,
+          onChunk: (chunk) => {
+            if (cacheAbort.signal.aborted) return;
+            if (Object.keys(chunk).length === 0) return;
+            setRatings((current) => ({ ...current, ...chunk }));
+          },
+        });
+      }).catch((cause) => {
+        if (cacheAbort.signal.aborted) return;
+        console.warn(cause);
+        setError(t('errors.cacheReadFailed'));
+      }).finally(() => {
+        if (!cacheAbort.signal.aborted) setIsRatingCacheLoading(false);
+      });
 
     return () => cacheAbort.abort();
   }, [facilities, t]);
@@ -168,17 +172,6 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const visibleListResults = useMemo(
     () => filteredResults.slice(0, visibleListLimit),
     [filteredResults, visibleListLimit],
-  );
-  const refreshableResults = useMemo(
-    () => filterAndSortFacilities(allResults, {
-      ...filters,
-      hoursMode: '',
-    }),
-    [allResults, filters],
-  );
-  const pendingRefreshCount = useMemo(
-    () => refreshableResults.filter((result) => ratingNeedsRefresh(result.rating)).length,
-    [refreshableResults],
   );
 
   const stats = useMemo(() => {
@@ -230,41 +223,6 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
   }, [t]);
-
-  const refreshRatings = useCallback(() => {
-    if (!RATINGS_API_AVAILABLE) {
-      setError(t('errors.apiMissing'));
-      return;
-    }
-
-    const missing = refreshableResults
-      .filter((result) => ratingNeedsRefresh(result.rating))
-      .slice(0, ENRICH_BATCH_SIZE)
-      .map((result) => result.facility);
-
-    if (missing.length === 0) {
-      setError(t('errors.noRefreshRemaining'));
-      return;
-    }
-
-    setIsEnriching(true);
-    setError(null);
-    enrichRatings(missing)
-      .then((freshRatings) => {
-        setRatings((current) => ({ ...current, ...freshRatings }));
-      })
-      .catch((cause) => {
-        console.error(cause);
-        if (cause instanceof RatingsApiError && cause.status === 429) {
-          setError(t('errors.quotaReached'));
-        } else if (cause instanceof RatingsApiError && cause.messageKey) {
-          setError(t(cause.messageKey, { status: cause.status }));
-        } else {
-          setError(t('errors.googleRatingsFailed'));
-        }
-      })
-      .finally(() => setIsEnriching(false));
-  }, [refreshableResults, t]);
 
   const togglePersonal = useCallback((facilityId: string, key: FacilityPersonalKey) => {
     setUserStates((current) => toggleFacilityFlag(current, facilityId, key));
@@ -327,16 +285,13 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
             setSelectedPlaceId(id);
           }}
           onLocate={locateUser}
-          onRefreshRatings={refreshRatings}
-          canRefreshRatings={pendingRefreshCount > 0}
+          onOpenAdmin={() => setIsAdminPanelOpen(true)}
           onTogglePersonal={togglePersonal}
           compareIds={compareIds}
           compareResults={compareResults}
           onToggleCompare={toggleCompare}
           isLoading={isLoading}
-          isEnriching={isEnriching}
           isRatingCacheLoading={isRatingCacheLoading}
-          pendingRefreshCount={pendingRefreshCount}
           error={error}
           stats={stats}
           facilityChanges={facilityChanges}
@@ -401,6 +356,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
         onUpdateNote={updateNote}
         onToggleCompare={toggleCompare}
       />
+
+      {isAdminPanelOpen && (
+        <AdminPanel
+          facilities={facilities}
+          ratings={ratings}
+          onClose={() => setIsAdminPanelOpen(false)}
+          onRatingsChange={(freshRatings) => setRatings((current) => ({ ...current, ...freshRatings }))}
+        />
+      )}
 
       <button
         className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-bold text-white shadow-2xl transition hover:bg-[var(--accent-strong)] md:hidden"
