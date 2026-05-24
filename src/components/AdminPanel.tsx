@@ -77,7 +77,7 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
     setError(null);
     setMessage(null);
     try {
-      const meta = await rebuildRatingSnapshot(activeCredentials, facilities);
+      const meta = await rebuildRatingSnapshot(activeCredentials);
       const snapshot = await getRatingsSnapshot();
       onRatingsChange(Object.fromEntries(snapshot.ratings.map((rating) => [rating.facilityId, rating])));
       await loadStatus(activeCredentials);

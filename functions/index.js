@@ -7,7 +7,7 @@ const { getFirestore } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 
 initializeApp();
-setGlobalOptions({ region: 'europe-west1', maxInstances: 10 });
+setGlobalOptions({ region: 'europe-west1', maxInstances: 10, memory: '512MiB' });
 
 const GOOGLE_MAPS_PLATFORM_KEY = defineSecret('GOOGLE_MAPS_PLATFORM_KEY');
 const RATINGS_ADMIN_USERNAME = defineSecret('RATINGS_ADMIN_USERNAME');
@@ -23,8 +23,8 @@ const SNAPSHOT_SHARDS_COLLECTION = 'googleRatingSnapshotShards';
 const SNAPSHOT_META_DOC = 'current';
 const BENEFIT_SOURCE_URL = 'https://benefitsystems.com.tr/facilities-tr.json';
 const MAX_GET_BATCH = 100;
-const MAX_ENRICH_BATCH = Number(process.env.MAX_ENRICH_BATCH || 25);
-const DAILY_ENRICH_LIMIT = Number(process.env.DAILY_ENRICH_LIMIT || 25);
+const MAX_ENRICH_BATCH = Number(process.env.MAX_ENRICH_BATCH || 50);
+const DAILY_ENRICH_LIMIT = Number(process.env.DAILY_ENRICH_LIMIT || 50);
 const MONTHLY_ENRICH_LIMIT = Number(process.env.MONTHLY_ENRICH_LIMIT || 900);
 const SNAPSHOT_SHARD_COUNT = Number(process.env.RATING_SNAPSHOT_SHARD_COUNT || 40);
 

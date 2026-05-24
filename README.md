@@ -8,7 +8,7 @@ MultiSport Türkiye tesis listesini Benefit Systems public JSON datasından yük
 2. **Places API:** Spor salonu arama özelliği için etkinleştirildi.
 3. **Kotalar (Hard Cap):**
    - Maps JavaScript API: Günlük maksimum 300 Map loads (harita yüklemesi).
-   - Places API / Text Search: Günlük maksimum 25 Requests (istek).
+   - Places API / Text Search: Günlük maksimum 50 Requests (istek).
 4. **Bütçe Uyarısı:** "MMSAI3 Maps API Butce Uyarisi" adıyla ₺100 bütçe oluşturuldu. Bütçe %50, %90 ve %100 dolduğunda e-posta uyarısı gönderilecektir.
 5. **Secret / Ortam Değişkenleri:** API Key, AI Studio'ya `GOOGLE_MAPS_PLATFORM_KEY` secret'ı olarak kaydedildi ve uygulama otomatik olarak yeniden derlendi.
 
@@ -69,7 +69,7 @@ firebase functions:secrets:set RATINGS_ADMIN_USERNAME --project mymultisport-bc9
 firebase functions:secrets:set RATINGS_ADMIN_PASSWORD --project mymultisport-bc9c5
 ```
 
-Varsayılan maliyet koruma limitleri Functions içinde `DAILY_ENRICH_LIMIT=25`, `MONTHLY_ENRICH_LIMIT=900`, `MAX_ENRICH_BATCH=25` olarak uygulanır. Google Cloud tarafında da Places/Text Search günlük kotası 25, Maps JavaScript günlük kotası 300 olacak şekilde ayrıca sınırlandırılmalıdır.
+Varsayılan maliyet koruma limitleri Functions içinde `DAILY_ENRICH_LIMIT=50`, `MONTHLY_ENRICH_LIMIT=900`, `MAX_ENRICH_BATCH=50` olarak uygulanır. Google Cloud tarafında da Places/Text Search günlük kotası 50, Maps JavaScript günlük kotası 300 olacak şekilde ayrıca sınırlandırılmalıdır.
 
 Deploy:
 

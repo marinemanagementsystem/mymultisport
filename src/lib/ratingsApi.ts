@@ -6,7 +6,7 @@ import type {
 } from '../types';
 import type { TranslationKey } from './i18n';
 
-const MAX_ENRICH_BATCH = 25;
+const MAX_ENRICH_BATCH = 50;
 const MAX_GET_BATCH = 100;
 const CACHE_READ_CONCURRENCY = 4;
 
@@ -132,16 +132,13 @@ export async function getAdminRatingsStatus(credentials: AdminCredentials): Prom
 
 export async function rebuildRatingSnapshot(
   credentials: AdminCredentials,
-  facilities: BenefitFacility[] = [],
 ): Promise<RatingsSnapshotResponse['meta']> {
   const response = await fetch(`${API_BASE_URL}/api/admin/ratings/snapshot/rebuild`, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
       Authorization: basicAuth(credentials),
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ facilities: facilities.map(toRatingFacilityPayload) }),
   });
   const payload = await parseAdminResponse<{ meta: RatingsSnapshotResponse['meta'] }>(
     response,
