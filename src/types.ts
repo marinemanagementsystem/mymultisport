@@ -1,5 +1,8 @@
 export type MatchStatus = 'matched' | 'ambiguous' | 'not_found' | 'stale';
 export type HoursFilterMode = '' | 'open_now' | 'closed_now' | 'open_at' | 'open_until' | 'open_between';
+export type ProviderId = 'multisport' | 'pluxee';
+export type PluxeeServiceId = '3' | '4' | '9';
+export type PluxeeServiceMode = 'paket' | 'masa' | 'alGotur' | 'catering';
 
 export interface BenefitActivity {
   name: string;
@@ -12,6 +15,7 @@ export interface BenefitActivityGroup {
 
 export interface BenefitFacility {
   id: string;
+  provider?: ProviderId;
   name: string;
   slug: string;
   lat: number;
@@ -29,6 +33,29 @@ export interface BenefitFacility {
   vcOnly: boolean;
   allowInternationalVisits: boolean;
   sourceStatus?: 'current' | 'historical';
+  sourceUrl?: string;
+  phone?: string;
+  neighborhood?: string;
+  category?: string;
+  todayHours?: string;
+  services?: PluxeeServiceId[];
+  serviceModes?: PluxeeServiceMode[];
+  pluxeePlus?: boolean;
+  isOpenNow?: boolean;
+  googleMatch?: PluxeeGoogleMatch;
+  fingerprint?: string;
+}
+
+export interface PluxeeGoogleMatch {
+  facilityId: string;
+  googlePlaceId?: string;
+  matchStatus: 'matched' | 'ambiguous' | 'not_found' | 'error';
+  matchScore?: number;
+  distanceMeters?: number;
+  matchedAt: string;
+  pluxeeFingerprint: string;
+  queryUsed: string;
+  error?: string;
 }
 
 export interface GoogleRatingMatch {
@@ -144,7 +171,7 @@ export interface FilterState {
   city: string;
   district: string;
   activity: string;
-  sort: 'recommended' | 'distance' | 'rating_desc' | 'reviews_desc' | 'az';
+  sort: 'recommended' | 'distance' | 'rating_desc' | 'reviews_desc' | 'az' | 'za';
   minRating: number;
   minReviews: number;
   radiusKm: number;
@@ -157,6 +184,10 @@ export interface FilterState {
   hasPhoto: boolean;
   activeOnly: boolean;
   internationalOnly: boolean;
+  providerService: '' | PluxeeServiceId;
+  serviceMode: '' | PluxeeServiceMode;
+  pluxeePlusOnly: boolean;
+  openNowOnly: boolean;
 }
 
 export interface FacilityStats {

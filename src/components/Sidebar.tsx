@@ -32,6 +32,7 @@ import type {
   FacilityResult,
   FacilityStats,
   FilterState,
+  ProviderId,
 } from '../types';
 import {
   formatDistanceKm,
@@ -50,9 +51,14 @@ import {
   getUniqueCards,
   getUniqueCities,
   getUniqueDistricts,
+  getUniqueServiceModes,
+  serviceLabel,
+  serviceModeLabel,
 } from '../lib/facilities';
 
 interface SidebarProps {
+  provider: ProviderId;
+  onProviderChange: (provider: ProviderId) => void;
   allFacilities: BenefitFacility[];
   results: FacilityResult[];
   totalResults: number;
@@ -78,6 +84,8 @@ interface SidebarProps {
 type SidebarPanel = 'discover' | 'updates' | 'compare';
 
 export default function Sidebar({
+  provider,
+  onProviderChange,
   allFacilities,
   results,
   totalResults,
@@ -107,6 +115,9 @@ export default function Sidebar({
   const activities = useMemo(() => getUniqueActivities(allFacilities), [allFacilities]);
   const amenities = useMemo(() => getUniqueAmenities(allFacilities), [allFacilities]);
   const cards = useMemo(() => getUniqueCards(allFacilities), [allFacilities]);
+  const serviceModes = useMemo(() => getUniqueServiceModes(allFacilities), [allFacilities]);
+  const isPluxee = provider === 'pluxee';
+  const pluxeePlusCount = results.filter((result) => result.facility.pluxeePlus).length;
   const activeFilterCount = [
     filters.query,
     filters.city,
@@ -122,6 +133,10 @@ export default function Sidebar({
     filters.hasPhoto ? 'photo' : '',
     filters.activeOnly ? 'active' : '',
     filters.internationalOnly ? 'international' : '',
+    filters.providerService,
+    filters.serviceMode,
+    filters.pluxeePlusOnly ? 'pluxeePlus' : '',
+    filters.openNowOnly ? 'openNow' : '',
     filters.sort !== 'recommended' ? filters.sort : '',
   ].filter(Boolean).length;
 
@@ -152,6 +167,10 @@ export default function Sidebar({
       hasPhoto: false,
       activeOnly: false,
       internationalOnly: false,
+      providerService: '',
+      serviceMode: '',
+      pluxeePlusOnly: false,
+      openNowOnly: false,
     });
   };
 
@@ -164,7 +183,7 @@ export default function Sidebar({
           <div>
             <h1 className="text-[1.35rem] font-black leading-none tracking-normal md:text-[1.55rem]">MyMultiSport</h1>
             <p className="mt-1.5 max-w-[28ch] text-[13px] leading-5 text-[var(--text-secondary)] md:text-sm">
-              {t('app.description')}
+              {isPluxee ? 'Pluxee üye işyerlerini harita ve filtrelerle keşfet.' : t('app.description')}
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -172,22 +191,26 @@ export default function Sidebar({
             <div className="rounded-full border border-[var(--accent-soft)] bg-[var(--accent-muted)] px-3 py-1 text-xs font-black text-[var(--accent-text)]">
               {formatCount(stats.total, 'facility')}
             </div>
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] px-3 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-              aria-label="Admin"
-              title="Admin"
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Admin
-            </button>
+            {!isPluxee && (
+              <button
+                type="button"
+                onClick={onOpenAdmin}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] px-3 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                aria-label="Admin"
+                title="Admin"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Admin
+              </button>
+            )}
           </div>
         </div>
 
+        <ProviderSwitch provider={provider} onChange={onProviderChange} />
+
         <div className="mt-3 grid grid-cols-4 gap-2">
           <Stat label={t('stats.results')} value={formatNumber(stats.shown)} />
-          <Stat label={t('stats.rated')} value={isRatingCacheLoading ? t('stats.ratingsLoading') : formatNumber(stats.matched)} />
+          <Stat label={isPluxee ? 'Plus' : t('stats.rated')} value={isPluxee ? formatNumber(pluxeePlusCount) : isRatingCacheLoading ? t('stats.ratingsLoading') : formatNumber(stats.matched)} />
           <Stat label={t('stats.favorite')} value={formatNumber(stats.favorites)} />
           <Stat label={t('stats.visited')} value={formatNumber(stats.visited)} />
         </div>
@@ -239,7 +262,21 @@ export default function Sidebar({
             <Select label={t('filters.district')} value={filters.district} onChange={(value) => updateFilter('district', value)} options={districts} placeholder={t('placeholders.allDistricts')} />
           </div>
 
-          <Select label={t('filters.activity')} value={filters.activity} onChange={(value) => updateFilter('activity', value)} options={activities} placeholder={t('placeholders.allActivities')} />
+          {isPluxee && (
+            <Select
+              label="Hizmet tipi"
+              value={filters.providerService}
+              onChange={(value) => updateFilter('providerService', value as FilterState['providerService'])}
+              options={[
+                ['3', 'Pluxee Yemek'],
+                ['4', 'Pluxee Business'],
+                ['9', 'Pluxee Gıda'],
+              ]}
+              placeholder="Tüm Pluxee"
+            />
+          )}
+
+          <Select label={isPluxee ? 'Kategori' : t('filters.activity')} value={filters.activity} onChange={(value) => updateFilter('activity', value)} options={activities} placeholder={isPluxee ? 'Tüm kategoriler' : t('placeholders.allActivities')} />
 
           <div className="grid grid-cols-2 gap-2">
             <Select
@@ -249,9 +286,12 @@ export default function Sidebar({
               options={[
                 ['recommended', t('sort.recommended')],
                 ['distance', t('sort.distance')],
-                ['rating_desc', t('sort.rating')],
-                ['reviews_desc', t('sort.reviews')],
+                ...(!isPluxee ? [
+                  ['rating_desc', t('sort.rating')],
+                  ['reviews_desc', t('sort.reviews')],
+                ] as Array<[string, string]> : []),
                 ['az', t('sort.az')],
+                ['za', 'Z-A'],
               ]}
             />
             <Select
@@ -269,74 +309,117 @@ export default function Sidebar({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Select
-              label={t('filters.card')}
-              value={filters.card}
-              onChange={(value) => updateFilter('card', value)}
-              options={cards}
-              placeholder={t('placeholders.allCards')}
-            />
-            <Select
-              label={t('filters.personal')}
-              value={filters.personal}
-              onChange={(value) => updateFilter('personal', value as FilterState['personal'])}
-              options={[
-                ['favorite', t('personal.favorites')],
-                ['wantToGo', t('personal.wantToGo')],
-                ['visited', t('personal.visited')],
-                ['noted', t('personal.noted')],
-              ]}
-              placeholder={t('filters.all')}
-            />
-          </div>
-
-          {amenities.length > 0 && (
-            <Select label={t('filters.amenity')} value={filters.amenity} onChange={(value) => updateFilter('amenity', value)} options={amenities} placeholder={t('placeholders.allAmenities')} />
+          {isPluxee ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                label="Servis"
+                value={filters.serviceMode}
+                onChange={(value) => updateFilter('serviceMode', value as FilterState['serviceMode'])}
+                options={[
+                  ['paket', serviceModeLabel('paket')],
+                  ['masa', serviceModeLabel('masa')],
+                  ['alGotur', serviceModeLabel('alGotur')],
+                  ['catering', serviceModeLabel('catering')],
+                  ...serviceModes
+                    .filter((mode) => !['paket', 'masa', 'alGotur', 'catering'].includes(mode))
+                    .map((mode) => [mode, serviceModeLabel(mode)] as [string, string]),
+                ]}
+                placeholder="Tüm servisler"
+              />
+              <Select
+                label={t('filters.personal')}
+                value={filters.personal}
+                onChange={(value) => updateFilter('personal', value as FilterState['personal'])}
+                options={[
+                  ['favorite', t('personal.favorites')],
+                  ['wantToGo', t('personal.wantToGo')],
+                  ['visited', t('personal.visited')],
+                  ['noted', t('personal.noted')],
+                ]}
+                placeholder={t('filters.all')}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                label={t('filters.card')}
+                value={filters.card}
+                onChange={(value) => updateFilter('card', value)}
+                options={cards}
+                placeholder={t('placeholders.allCards')}
+              />
+              <Select
+                label={t('filters.personal')}
+                value={filters.personal}
+                onChange={(value) => updateFilter('personal', value as FilterState['personal'])}
+                options={[
+                  ['favorite', t('personal.favorites')],
+                  ['wantToGo', t('personal.wantToGo')],
+                  ['visited', t('personal.visited')],
+                  ['noted', t('personal.noted')],
+                ]}
+                placeholder={t('filters.all')}
+              />
+            </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <Select
-              label={t('filters.minRating')}
-              value={String(filters.minRating)}
-              onChange={(value) => updateFilter('minRating', Number(value))}
-              options={[
-                ['0', t('filters.all')],
-                ['3.5', '3.5+'],
-                ['4', '4.0+'],
-                ['4.3', '4.3+'],
-                ['4.5', '4.5+'],
-                ['4.7', '4.7+'],
-              ]}
-            />
-            <Select
-              label={t('filters.minReviews')}
-              value={String(filters.minReviews)}
-              onChange={(value) => updateFilter('minReviews', Number(value))}
-              options={[
-                ['0', t('filters.all')],
-                ['10', '10+'],
-                ['50', '50+'],
-                ['100', '100+'],
-                ['500', '500+'],
-              ]}
-            />
-          </div>
+          {!isPluxee && (
+          <>
+            {amenities.length > 0 && (
+              <Select label={t('filters.amenity')} value={filters.amenity} onChange={(value) => updateFilter('amenity', value)} options={amenities} placeholder={t('placeholders.allAmenities')} />
+            )}
 
-          <HoursFilterControls
-            mode={filters.hoursMode}
-            time={filters.hoursTime}
-            endTime={filters.hoursEndTime}
-            onModeChange={(value) => updateFilter('hoursMode', value)}
-            onTimeChange={(value) => updateFilter('hoursTime', value)}
-            onEndTimeChange={(value) => updateFilter('hoursEndTime', value)}
-          />
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                label={t('filters.minRating')}
+                value={String(filters.minRating)}
+                onChange={(value) => updateFilter('minRating', Number(value))}
+                options={[
+                  ['0', t('filters.all')],
+                  ['3.5', '3.5+'],
+                  ['4', '4.0+'],
+                  ['4.3', '4.3+'],
+                  ['4.5', '4.5+'],
+                  ['4.7', '4.7+'],
+                ]}
+              />
+              <Select
+                label={t('filters.minReviews')}
+                value={String(filters.minReviews)}
+                onChange={(value) => updateFilter('minReviews', Number(value))}
+                options={[
+                  ['0', t('filters.all')],
+                  ['10', '10+'],
+                  ['50', '50+'],
+                  ['100', '100+'],
+                  ['500', '500+'],
+                ]}
+              />
+            </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <ToggleChip active={filters.activeOnly} icon={<CheckCircle2 className="h-3.5 w-3.5" />} label={t('filters.activeOnly')} onClick={() => updateFilter('activeOnly', !filters.activeOnly)} />
-            <ToggleChip active={filters.hasPhoto} icon={<ImageIcon className="h-3.5 w-3.5" />} label={t('filters.withPhoto')} onClick={() => updateFilter('hasPhoto', !filters.hasPhoto)} />
-            <ToggleChip active={filters.internationalOnly} icon={<Globe2 className="h-3.5 w-3.5" />} label={t('filters.global')} onClick={() => updateFilter('internationalOnly', !filters.internationalOnly)} />
-          </div>
+            <HoursFilterControls
+              mode={filters.hoursMode}
+              time={filters.hoursTime}
+              endTime={filters.hoursEndTime}
+              onModeChange={(value) => updateFilter('hoursMode', value)}
+              onTimeChange={(value) => updateFilter('hoursTime', value)}
+              onEndTimeChange={(value) => updateFilter('hoursEndTime', value)}
+            />
+
+            <div className="grid grid-cols-3 gap-2">
+              <ToggleChip active={filters.activeOnly} icon={<CheckCircle2 className="h-3.5 w-3.5" />} label={t('filters.activeOnly')} onClick={() => updateFilter('activeOnly', !filters.activeOnly)} />
+              <ToggleChip active={filters.hasPhoto} icon={<ImageIcon className="h-3.5 w-3.5" />} label={t('filters.withPhoto')} onClick={() => updateFilter('hasPhoto', !filters.hasPhoto)} />
+              <ToggleChip active={filters.internationalOnly} icon={<Globe2 className="h-3.5 w-3.5" />} label={t('filters.global')} onClick={() => updateFilter('internationalOnly', !filters.internationalOnly)} />
+            </div>
+          </>
+          )}
+
+          {isPluxee && (
+            <div className="grid grid-cols-2 gap-2">
+              <ToggleChip active={filters.pluxeePlusOnly} icon={<CreditCard className="h-3.5 w-3.5" />} label="Pluxee Plus" onClick={() => updateFilter('pluxeePlusOnly', !filters.pluxeePlusOnly)} />
+              <ToggleChip active={filters.openNowOnly} icon={<Clock3 className="h-3.5 w-3.5" />} label="Şu an açık" onClick={() => updateFilter('openNowOnly', !filters.openNowOnly)} />
+            </div>
+          )}
 
           <div className="grid grid-cols-[1fr_auto] gap-2">
             <button type="button" onClick={onLocate} className="action-button secondary">
@@ -417,6 +500,32 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-raised)] px-2.5 py-1.5 md:py-2">
       <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</div>
       <div className="mt-1 text-sm font-black">{value}</div>
+    </div>
+  );
+}
+
+function ProviderSwitch({ provider, onChange }: { provider: ProviderId; onChange: (provider: ProviderId) => void }) {
+  const options: Array<{ id: ProviderId; label: string }> = [
+    { id: 'multisport', label: 'MultiSport' },
+    { id: 'pluxee', label: 'Pluxee' },
+  ];
+
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-[var(--border-soft)] bg-[var(--surface-muted)] p-1">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          onClick={() => onChange(option.id)}
+          className={`h-9 rounded-lg text-sm font-black transition ${
+            provider === option.id
+              ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] shadow-sm'
+              : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -604,11 +713,14 @@ function FacilityCard({
 }) {
   const { t, formatCount } = useI18n();
   const { facility, rating, distanceKm, userState } = result;
+  const isPluxee = facility.provider === 'pluxee';
   const activities = getPrimaryActivities(facility);
   const amenities = getPrimaryAmenities(facility);
   const ratingReady = rating?.matchStatus === 'matched';
   const mapUrl = getGoogleMapsSearchUrl(facility, rating);
-  const hoursSummary = formatOpeningHoursSummary(rating, language) || (ratingReady ? t('facility.noHours') : t('facility.hoursPending'));
+  const hoursSummary = isPluxee
+    ? formatPluxeeHours(facility)
+    : formatOpeningHoursSummary(rating, language) || (ratingReady ? t('facility.noHours') : t('facility.hoursPending'));
   const ratingFallback = rating?.matchStatus === 'ambiguous'
     ? t('facility.matchAmbiguous')
     : rating?.matchStatus === 'not_found'
@@ -632,7 +744,7 @@ function FacilityCard({
           />
         ) : (
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-muted)] text-xs font-black text-[var(--text-tertiary)] md:h-24 md:w-24">
-            MS
+            {isPluxee ? 'PX' : 'MS'}
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -654,7 +766,8 @@ function FacilityCard({
               {facility.cityDistrict || facility.city}
             </span>
             {distanceKm !== undefined && <span>{formatDistanceKm(distanceKm, language)}</span>}
-            {facility.allowInternationalVisits && <span className="inline-flex items-center gap-1"><Globe2 className="h-3.5 w-3.5" /> {t('facility.global')}</span>}
+            {!isPluxee && facility.allowInternationalVisits && <span className="inline-flex items-center gap-1"><Globe2 className="h-3.5 w-3.5" /> {t('facility.global')}</span>}
+            {isPluxee && facility.pluxeePlus && <span className="inline-flex items-center gap-1"><CreditCard className="h-3.5 w-3.5" /> Pluxee Plus</span>}
           </div>
           <div className="mt-1.5 inline-flex max-w-full items-center gap-1.5 truncate text-xs font-bold text-[var(--accent-text)]">
             <Clock3 className="h-3.5 w-3.5 shrink-0" />
@@ -679,8 +792,13 @@ function FacilityCard({
 
       <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-[var(--border-soft)] px-3 py-2">
         <div className="flex min-w-0 items-center gap-2 text-sm">
-          <Star className={`h-4 w-4 ${ratingReady ? 'fill-amber-400 text-amber-400' : 'text-[var(--text-tertiary)]'}`} />
-          {ratingReady ? (
+          <Star className={`h-4 w-4 ${ratingReady || facility.googleMatch?.googlePlaceId ? 'fill-amber-400 text-amber-400' : 'text-[var(--text-tertiary)]'}`} />
+          {isPluxee ? (
+            <span className="truncate text-xs font-bold text-[var(--text-secondary)]">
+              {(facility.services || []).map(serviceLabel).join(' / ') || 'Pluxee'}
+              {facility.googleMatch?.googlePlaceId ? ' · Google eşleşti' : ''}
+            </span>
+          ) : ratingReady ? (
             <span className="font-black">
               {rating.rating?.toFixed(1)}
               <span className="font-semibold text-[var(--text-tertiary)]"> / {formatCount(rating.userRatingCount || 0, 'review')}</span>
@@ -738,7 +856,7 @@ function FacilityCard({
             onClick={(event) => event.stopPropagation()}
             className="text-xs font-black text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
           >
-            MultiSport
+            {isPluxee ? 'Pluxee' : 'MultiSport'}
           </a>
           <a
             href={mapUrl}
@@ -754,6 +872,13 @@ function FacilityCard({
       </div>
     </article>
   );
+}
+
+function formatPluxeeHours(facility: BenefitFacility): string {
+  if (facility.todayHours) {
+    return `${facility.isOpenNow ? 'Açık' : 'Saat'} · ${facility.todayHours}`;
+  }
+  return facility.isOpenNow ? 'Şu an açık' : 'Saat bilgisi yok';
 }
 
 function MiniStateButton({ active, label, onClick, children }: { active: boolean; label: string; onClick: () => void; children: ReactNode }) {

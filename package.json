@@ -12,7 +12,10 @@
     "cap:sync": "npm run build && npx cap sync android",
     "apk:debug": "npm run cap:sync && cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@21 ./gradlew assembleDebug",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
+    "sync:pluxee": "node scripts/sync-pluxee.mjs",
+    "match:pluxee:google": "node scripts/match-pluxee-google.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

@@ -1,0 +1,32 @@
+{
+  "provider": "pluxee",
+  "runId": "2026-05-27T22-23-43-036Z",
+  "snapshotVersion": "2026-05-27T22:23:43.037Z",
+  "generatedAt": "2026-05-27T22:23:43.037Z",
+  "source": {
+    "baseUrl": "https://www.pluxee.com.tr",
+    "services": [
+      "3",
+      "4",
+      "9"
+    ],
+    "sourceCounts": {
+      "3": 21,
+      "4": 21,
+      "9": 21
+    }
+  },
+  "totalMapped": 2,
+  "totalUnmapped": 61,
+  "serviceCounts": {
+    "3": 1,
+    "4": 1
+  },
+  "cities": [
+    {
+      "city": "İstanbul",
+      "slug": "istanbul",
+      "count": 2
+    }
+  ]
+}

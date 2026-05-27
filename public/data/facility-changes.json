@@ -1,13 +1,121 @@
 {
-  "generatedAt": "2026-05-24T10:20:07.553Z",
+  "generatedAt": "2026-05-27T22:25:28.674Z",
   "sourceUrl": "https://benefitsystems.com.tr/facilities-tr.json",
   "previousCount": 4202,
-  "currentCount": 4202,
-  "publicSourceCount": 4160,
-  "historicalCount": 42,
-  "newFacilities": [],
+  "currentCount": 4209,
+  "publicSourceCount": 4159,
+  "historicalCount": 50,
+  "newFacilities": [
+    {
+      "id": "5525TR",
+      "name": "Espilates Beşiktaş Pilates Stüdyosu",
+      "city": "İstanbul",
+      "cityDistrict": "Beşiktaş",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Yoga"
+      ]
+    },
+    {
+      "id": "5647TR",
+      "name": "Fizyo Rapt",
+      "city": "İstanbul",
+      "cityDistrict": "Başakşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5637TR",
+      "name": "Fizyohaus Fizyoterapi",
+      "city": "İstanbul",
+      "cityDistrict": "Kağıthane",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Body Fit",
+        "Grup Dersleri",
+        "Mat Pilates",
+        "Pilates",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5745TR",
+      "name": "Gym-Clinic Wellness Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Bağcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5632TR",
+      "name": "MK Pilates 2",
+      "city": "İstanbul",
+      "cityDistrict": "Beşiktaş",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Mat Pilates",
+        "Reformer Pilates",
+        "Total Body Workout"
+      ]
+    },
+    {
+      "id": "5628TR",
+      "name": "Neva Pilates Club 2",
+      "city": "İstanbul",
+      "cityDistrict": "Bağcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Kadınlara Özel Hizmet",
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "5747TR",
+      "name": "Somerset Maslak",
+      "city": "İstanbul",
+      "cityDistrict": "Sarıyer",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Havuz"
+      ]
+    }
+  ],
   "removedFacilities": [],
   "historicalFacilities": [
+    {
+      "id": "139TR",
+      "name": "Airsoft Pro Poligon Cafe",
+      "city": "İstanbul",
+      "cityDistrict": "Bakırköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Airsoft"
+      ]
+    },
     {
       "id": "4148TR",
       "name": "ALSANCAK REFORMER PİLATES-Pınar Pamuk",
@@ -35,6 +143,19 @@
       ]
     },
     {
+      "id": "4836TR",
+      "name": "Berfin Kara Pilates Stüdyo",
+      "city": "İstanbul",
+      "cityDistrict": "Avcılar",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Kadınlara Özel Hizmet",
+        "Reformer Pilates"
+      ]
+    },
+    {
       "id": "921TR",
       "name": "Best Premium Fitness",
       "city": "İzmir",
@@ -58,6 +179,44 @@
       ],
       "activities": [
         "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4803TR",
+      "name": "Bos Training Göztepe",
+      "city": "İstanbul",
+      "cityDistrict": "Kadıköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "Mat Pilates"
+      ]
+    },
+    {
+      "id": "4055TR",
+      "name": "Breathe in Pilates Studio",
+      "city": "Kocaeli",
+      "cityDistrict": "Kartepe",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Reformer Pilates"
+      ]
+    },
+    {
+      "id": "4602TR",
+      "name": "Buka Glutelab",
+      "city": "İstanbul",
+      "cityDistrict": "Ataşehir",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Total Body Workout"
       ]
     },
     {
@@ -241,6 +400,22 @@
       ]
     },
     {
+      "id": "2134TR",
+      "name": "İzFit Pt Studio",
+      "city": "İzmir",
+      "cityDistrict": "Menderes",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Boks",
+        "Crossfit",
+        "Fitness & Gym",
+        "Mat Pilates"
+      ]
+    },
+    {
       "id": "1772TR",
       "name": "İzmir Golf Club",
       "city": "İzmir",
@@ -251,6 +426,20 @@
       ],
       "activities": [
         "Golf"
+      ]
+    },
+    {
+      "id": "5120TR",
+      "name": "Lady Coach - Pınar Celiloğulları",
+      "city": "İzmir",
+      "cityDistrict": "Karşıyaka",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fonksiyonel Antrenman",
+        "Mat Pilates",
+        "Reformer Pilates"
       ]
     },
     {
@@ -474,6 +663,21 @@
       ]
     },
     {
+      "id": "5405TR",
+      "name": "Prime Fitness Çekmeköy",
+      "city": "İstanbul",
+      "cityDistrict": "Çekmeköy",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Hamam",
+        "Havuz",
+        "Sauna"
+      ]
+    },
+    {
       "id": "873TR",
       "name": "SDF SPORT Pilates & Ems Studio",
       "city": "İzmir",
@@ -595,73 +799,91 @@
   ],
   "updatedFacilities": [
     {
-      "id": "2636TR",
-      "name": "Evrensel Tenis",
-      "city": "Bursa",
-      "cityDistrict": "Nilüfer",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Tenis"
-      ],
-      "changedFields": [
-        "district",
-        "international"
-      ]
-    },
-    {
-      "id": "4275TR",
-      "name": "Fizyofiplus FFP Pilates Mecidiyeköy",
+      "id": "1727TR",
+      "name": "Hera City",
       "city": "İstanbul",
-      "cityDistrict": "Şişli",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Reformer Pilates"
-      ],
-      "changedFields": [
-        "district",
-        "international"
-      ]
-    },
-    {
-      "id": "986TR",
-      "name": "Form Fiz Fizyoterapi Danışmanlık",
-      "city": "İstanbul",
-      "cityDistrict": "Kadıköy",
-      "cards": [
-        "Plus",
-        "Classic"
-      ],
-      "activities": [
-        "Pilates",
-        "Reformer Pilates"
-      ],
-      "changedFields": [
-        "district",
-        "international"
-      ]
-    },
-    {
-      "id": "2766TR",
-      "name": "Yalçınkaya Fight Club",
-      "city": "İstanbul",
-      "cityDistrict": "Ümraniye",
+      "cityDistrict": "Sancaktepe",
       "cards": [
         "Plus",
         "Classic"
       ],
       "activities": [
         "Boks",
+        "Crossfit",
+        "Fonksiyonel Antrenman",
         "Kick Box"
       ],
       "changedFields": [
-        "district",
-        "international"
+        "activities"
+      ]
+    },
+    {
+      "id": "1590TR",
+      "name": "Kent Paten",
+      "city": "Ankara",
+      "cityDistrict": "Çankaya",
+      "cards": [
+        "Plus",
+        "Classic"
+      ],
+      "activities": [
+        "Buz Pateni"
+      ],
+      "changedFields": [
+        "status"
+      ]
+    },
+    {
+      "id": "4759TR",
+      "name": "Mk Pilates",
+      "city": "İstanbul",
+      "cityDistrict": "Beşiktaş",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym",
+        "Fonksiyonel Antrenman",
+        "Mat Pilates",
+        "Reformer Pilates"
+      ],
+      "changedFields": [
+        "activities"
+      ]
+    },
+    {
+      "id": "4903TR",
+      "name": "White Lotus Spa Fitness",
+      "city": "İstanbul",
+      "cityDistrict": "Güngören",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Buhar Odası",
+        "Fin Hamamı",
+        "Fitness & Gym",
+        "Hamam",
+        "Sauna"
+      ],
+      "changedFields": [
+        "activities"
+      ]
+    },
+    {
+      "id": "4723TR",
+      "name": "XArena Fitnes Spor Salonu",
+      "city": "Ankara",
+      "cityDistrict": "Polatlı",
+      "cards": [
+        "Plus"
+      ],
+      "activities": [
+        "Fitness & Gym"
+      ],
+      "changedFields": [
+        "address",
+        "activities"
       ]
     }
   ]

@@ -12,6 +12,8 @@ import type { LanguageCode } from './i18n';
 import { getWeekdayLabel, translate } from './i18n';
 
 const BENEFIT_FACILITY_DETAIL_BASE = 'https://benefitsystems.com.tr/tesisler/';
+const PLUXEE_DATA_BASE = '/data/providers/pluxee';
+const PROVIDER_CACHE_NAME = 'mymultisport-provider-data-v1';
 const DEFAULT_TIME_ZONE = 'Europe/Istanbul';
 const DAY_MINUTES = 24 * 60;
 const WEEK_MINUTES = 7 * DAY_MINUTES;
@@ -28,7 +30,50 @@ export async function loadFacilities(): Promise<BenefitFacility[]> {
   }
 
   const facilities = (await response.json()) as BenefitFacility[];
-  return facilities.filter(isUsableFacility);
+  return facilities
+    .map((facility) => ({ ...facility, provider: 'multisport' as const }))
+    .filter(isUsableFacility);
+}
+
+export async function loadPluxeeFacilities(): Promise<BenefitFacility[]> {
+  const manifest = await fetchCachedJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
+  const facilities = await fetchCachedJson<BenefitFacility[]>(
+    `${PLUXEE_DATA_BASE}/index-tr.json`,
+    manifest.snapshotVersion,
+  );
+  return facilities
+    .map((facility) => ({ ...facility, provider: 'pluxee' as const }))
+    .filter(isUsableFacility);
+}
+
+export async function loadPluxeeCityShard(citySlug: string): Promise<BenefitFacility[]> {
+  const manifest = await fetchCachedJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
+  const facilities = await fetchCachedJson<BenefitFacility[]>(
+    `${PLUXEE_DATA_BASE}/cities/${encodeURIComponent(citySlug)}.json`,
+    manifest.snapshotVersion,
+  );
+  return facilities
+    .map((facility) => ({ ...facility, provider: 'pluxee' as const }))
+    .filter(isUsableFacility);
+}
+
+async function fetchCachedJson<T>(url: string, version = ''): Promise<T> {
+  const versionedUrl = version ? `${url}?v=${encodeURIComponent(version)}` : url;
+
+  if (!('caches' in globalThis)) {
+    const response = await fetch(versionedUrl, { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error(`Veri yüklenemedi (${response.status}): ${url}`);
+    return response.json();
+  }
+
+  const cache = await caches.open(PROVIDER_CACHE_NAME);
+  const cached = await cache.match(versionedUrl);
+  if (cached) return cached.json();
+
+  const response = await fetch(versionedUrl, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`Veri yüklenemedi (${response.status}): ${url}`);
+  await cache.put(versionedUrl, response.clone());
+  return response.json();
 }
 
 export function isUsableFacility(facility: BenefitFacility): boolean {
@@ -70,6 +115,10 @@ export function filterAndSortFacilities(results: FacilityResult[], filters: Filt
     if (query && !searchText(facility).includes(query)) return false;
     if (filters.card && !facility.cards.some((card) => normalize(card) === normalize(filters.card))) return false;
     if (filters.amenity && !facility.amenities.some((amenity) => normalize(amenity) === normalize(filters.amenity))) return false;
+    if (filters.providerService && !facility.services?.includes(filters.providerService)) return false;
+    if (filters.serviceMode && !facility.serviceModes?.includes(filters.serviceMode)) return false;
+    if (filters.pluxeePlusOnly && !facility.pluxeePlus) return false;
+    if (filters.openNowOnly && !facility.isOpenNow) return false;
     if (filters.hasPhoto && !facility.thumbnail) return false;
     if (filters.activeOnly && facility.status !== 1) return false;
     if (filters.internationalOnly && !facility.allowInternationalVisits) return false;
@@ -101,6 +150,9 @@ export function filterAndSortFacilities(results: FacilityResult[], filters: Filt
     }
     if (filters.sort === 'reviews_desc') {
       return (b.rating?.userRatingCount ?? -1) - (a.rating?.userRatingCount ?? -1) || compareRating(b, a);
+    }
+    if (filters.sort === 'za') {
+      return collator.compare(b.facility.name, a.facility.name);
     }
     return collator.compare(a.facility.name, b.facility.name);
   });
@@ -179,7 +231,18 @@ export function getUniqueCards(facilities: BenefitFacility[]): string[] {
   return Array.from(names).sort((a, b) => collator.compare(a, b));
 }
 
+export function getUniqueServiceModes(facilities: BenefitFacility[]): string[] {
+  const names = new Set<string>();
+  facilities.forEach((facility) => facility.serviceModes?.forEach((mode) => {
+    if (mode) names.add(mode);
+  }));
+  return Array.from(names).sort((a, b) => collator.compare(serviceModeLabel(a), serviceModeLabel(b)));
+}
+
 export function getFacilityDetailUrl(facility: BenefitFacility): string {
+  if (facility.provider === 'pluxee') {
+    return facility.sourceUrl || facility.slug || 'https://www.pluxee.com.tr/uye-isyerleri';
+  }
   return new URL(facility.slug, BENEFIT_FACILITY_DETAIL_BASE).toString();
 }
 
@@ -187,6 +250,11 @@ export function getGoogleMapsSearchUrl(facility: BenefitFacility, rating?: Googl
   const params = new URLSearchParams({ api: '1' });
   const query = buildMapsQuery(facility, rating);
   params.set('query', query);
+
+  if (facility.googleMatch?.matchStatus === 'matched' && facility.googleMatch.googlePlaceId) {
+    params.set('query_place_id', facility.googleMatch.googlePlaceId);
+    return `https://www.google.com/maps/search/?${params.toString()}`;
+  }
 
   if (rating?.matchStatus === 'matched' && rating.placeId) {
     params.set('query_place_id', rating.placeId);
@@ -248,10 +316,15 @@ function searchText(facility: BenefitFacility): string {
     facility.city,
     facility.cityDistrict,
     facility.address,
+    facility.neighborhood,
+    facility.category,
+    facility.phone,
     ...getActivityNames(facility.activityGroups),
     ...facility.amenities,
     ...facility.discounts,
     ...facility.cards,
+    ...(facility.services || []).map(serviceLabel),
+    ...(facility.serviceModes || []).map(serviceModeLabel),
   ].join(' '));
 }
 
@@ -260,6 +333,25 @@ function buildMapsQuery(facility: BenefitFacility, rating?: GoogleRatingMatch): 
   const address = rating?.matchStatus === 'matched' && rating.formattedAddress ? rating.formattedAddress : facility.address;
   const parts = [exactName, address, facility.city].filter(Boolean);
   return parts.length > 0 ? parts.join(', ') : `${facility.lat},${facility.lng}`;
+}
+
+export function serviceLabel(serviceId: string): string {
+  if (serviceId === '3') return 'Pluxee Yemek';
+  if (serviceId === '4') return 'Pluxee Business';
+  if (serviceId === '9') return 'Pluxee Gıda';
+  return `Pluxee ${serviceId}`;
+}
+
+export function serviceModeLabel(value: string): string {
+  if (value === 'paket') return 'Paket servis';
+  if (value === 'masa') return 'Masa servisi';
+  if (value === 'alGotur') return 'Al-Götür';
+  if (value === 'catering') return 'Catering';
+  return value;
+}
+
+export function pluxeeCitySlug(city: string): string {
+  return normalize(city).replace(/\s+/g, '-') || 'unknown';
 }
 
 function matchesHoursFilter(result: FacilityResult, filters: FilterState): boolean {

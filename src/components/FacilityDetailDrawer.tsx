@@ -22,6 +22,7 @@ import {
   getFacilityDetailUrl,
   getGoogleMapsSearchUrl,
   getOpeningWeekdayDescriptions,
+  serviceLabel,
 } from '../lib/facilities';
 import { formatDistanceKm, useI18n } from '../lib/i18n';
 
@@ -46,11 +47,14 @@ export default function FacilityDetailDrawer({
   if (!result) return null;
 
   const { facility, rating, distanceKm, userState } = result;
+  const isPluxee = facility.provider === 'pluxee';
   const activities = getActivityNames(facility.activityGroups);
   const mapUrl = getGoogleMapsSearchUrl(facility, rating);
   const ratingReady = rating?.matchStatus === 'matched';
-  const hoursSummary = formatOpeningHoursSummary(rating, language) || (ratingReady ? t('facility.noHours') : t('facility.hoursPending'));
-  const weekdayDescriptions = getOpeningWeekdayDescriptions(rating);
+  const hoursSummary = isPluxee
+    ? formatPluxeeHours(facility)
+    : formatOpeningHoursSummary(rating, language) || (ratingReady ? t('facility.noHours') : t('facility.hoursPending'));
+  const weekdayDescriptions = isPluxee ? [] : getOpeningWeekdayDescriptions(rating);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40">
@@ -78,7 +82,7 @@ export default function FacilityDetailDrawer({
         <div className="space-y-5 p-5">
           <div className="grid grid-cols-3 gap-2">
             <Metric label={t('drawer.rating')} value={ratingReady ? rating.rating?.toFixed(1) || '-' : '-'} />
-            <Metric label={t('drawer.review')} value={rating?.userRatingCount ? formatCount(rating.userRatingCount, 'review') : '-'} />
+            <Metric label={isPluxee ? 'Pluxee' : t('drawer.review')} value={isPluxee ? (facility.pluxeePlus ? 'Plus' : 'Üye') : rating?.userRatingCount ? formatCount(rating.userRatingCount, 'review') : '-'} />
             <Metric label={t('drawer.distance')} value={distanceKm !== undefined ? formatDistanceKm(distanceKm, language) : '-'} />
           </div>
 
@@ -87,12 +91,18 @@ export default function FacilityDetailDrawer({
               <MapPin className="mt-1 h-4 w-4 shrink-0 text-[var(--accent-text)]" />
               <span>{facility.address || `${facility.cityDistrict}, ${facility.city}`}</span>
             </div>
+            {isPluxee && facility.phone && (
+              <div className="mt-3 flex items-start gap-2 text-sm leading-6 text-[var(--text-secondary)]">
+                <CreditCard className="mt-1 h-4 w-4 shrink-0 text-[var(--accent-text)]" />
+                <span>{facility.phone}</span>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-[var(--text-secondary)]">
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-1">
                 <MapPin className="h-3 w-3" />
                 {facility.cityDistrict || facility.city}
               </span>
-              {facility.allowInternationalVisits && (
+              {!isPluxee && facility.allowInternationalVisits && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-1">
                   <Globe2 className="h-3 w-3" />
                   {t('facility.international')}
@@ -102,6 +112,12 @@ export default function FacilityDetailDrawer({
                 <span key={card} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-1">
                   <CreditCard className="h-3 w-3" />
                   {card}
+                </span>
+              ))}
+              {isPluxee && (facility.services || []).map((service) => (
+                <span key={service} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-1">
+                  <CreditCard className="h-3 w-3" />
+                  {serviceLabel(service)}
                 </span>
               ))}
             </div>
@@ -188,6 +204,7 @@ export default function FacilityDetailDrawer({
             </section>
           )}
 
+          {!isPluxee && (
           <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-raised)] p-4">
             <div className="flex items-start gap-3">
               <MessageSquareOff className="mt-0.5 h-5 w-5 text-[var(--text-tertiary)]" />
@@ -199,6 +216,7 @@ export default function FacilityDetailDrawer({
               </div>
             </div>
           </section>
+          )}
 
           <div className="grid grid-cols-2 gap-2 pb-2">
             <a href={mapUrl} target="_blank" rel="noreferrer" className="action-button primary">
@@ -207,7 +225,7 @@ export default function FacilityDetailDrawer({
             </a>
             <a href={getFacilityDetailUrl(facility)} target="_blank" rel="noreferrer" className="action-button secondary">
               <Star className="h-4 w-4" />
-              MultiSport
+              {isPluxee ? 'Pluxee' : 'MultiSport'}
             </a>
             <button type="button" onClick={() => onToggleCompare(facility.id)} className="action-button secondary col-span-2">
               <Scale className="h-4 w-4" />
@@ -227,6 +245,13 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="mt-1 text-base font-black">{value}</div>
     </div>
   );
+}
+
+function formatPluxeeHours(facility: FacilityResult['facility']): string {
+  if (facility.todayHours) {
+    return `${facility.isOpenNow ? 'Açık' : 'Saat'} · ${facility.todayHours}`;
+  }
+  return facility.isOpenNow ? 'Şu an açık' : 'Saat bilgisi yok';
 }
 
 function PersonalButton({ active, label, onClick, children }: { active: boolean; label: string; onClick: () => void; children: ReactNode }) {

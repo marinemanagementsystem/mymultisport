@@ -11,6 +11,7 @@ import type {
   FacilityPersonalKey,
   FilterState,
   GoogleRatingMatch,
+  ProviderId,
   UserFacilityState,
   UserLocation,
 } from '../types';
@@ -18,6 +19,9 @@ import {
   buildFacilityResults,
   filterAndSortFacilities,
   loadFacilities,
+  loadPluxeeCityShard,
+  loadPluxeeFacilities,
+  pluxeeCitySlug,
 } from '../lib/facilities';
 import { loadFacilityChanges } from '../lib/facilityChanges';
 import {
@@ -51,6 +55,10 @@ const DEFAULT_FILTERS: FilterState = {
   hasPhoto: false,
   activeOnly: false,
   internationalOnly: false,
+  providerService: '',
+  serviceMode: '',
+  pluxeePlusOnly: false,
+  openNowOnly: false,
 };
 
 const INITIAL_LIST_RESULTS = 100;
@@ -58,23 +66,43 @@ const LIST_RESULTS_INCREMENT = 100;
 
 export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }) {
   const { t, formatNumber } = useI18n();
-  const [facilities, setFacilities] = useState<BenefitFacility[]>([]);
+  const [provider, setProvider] = useState<ProviderId>(() => (
+    localStorage.getItem('mymultisport-provider') === 'pluxee' ? 'pluxee' : 'multisport'
+  ));
+  const [multiSportFacilities, setMultiSportFacilities] = useState<BenefitFacility[]>([]);
+  const [pluxeeFacilities, setPluxeeFacilities] = useState<BenefitFacility[]>([]);
   const [ratings, setRatings] = useState<Record<string, GoogleRatingMatch>>({});
   const [userStates, setUserStates] = useState<Record<string, UserFacilityState>>(() => loadUserFacilityStates());
   const [facilityChanges, setFacilityChanges] = useState<FacilityChangeSummary | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
   const [compareIds, setCompareIds] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filtersByProvider, setFiltersByProvider] = useState<Record<ProviderId, FilterState>>({
+    multisport: { ...DEFAULT_FILTERS },
+    pluxee: { ...DEFAULT_FILTERS },
+  });
   const [userLocation, setUserLocation] = useState<UserLocation | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isMultiSportLoading, setIsMultiSportLoading] = useState(true);
+  const [isPluxeeLoading, setIsPluxeeLoading] = useState(false);
   const [isRatingCacheLoading, setIsRatingCacheLoading] = useState(false);
+  const [loadedPluxeeCitySlugs, setLoadedPluxeeCitySlugs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('mymultisport-theme') === 'dark');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [visibleListLimit, setVisibleListLimit] = useState(INITIAL_LIST_RESULTS);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const facilities = provider === 'pluxee' ? pluxeeFacilities : multiSportFacilities;
+  const filters = filtersByProvider[provider];
+  const isLoading = provider === 'pluxee' ? isPluxeeLoading : isMultiSportLoading;
+  const activeRatingCacheLoading = provider === 'multisport' ? isRatingCacheLoading : false;
+
+  const setActiveFilters = useCallback((nextFilters: FilterState) => {
+    setFiltersByProvider((current) => ({
+      ...current,
+      [provider]: nextFilters,
+    }));
+  }, [provider]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -92,24 +120,54 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('mymultisport-provider', provider);
+    setSelectedPlaceId(null);
+    setDetailPlaceId(null);
+    setCompareIds([]);
+    setVisibleListLimit(INITIAL_LIST_RESULTS);
+    setError(null);
+  }, [provider]);
+
+  useEffect(() => {
     let mounted = true;
-    setIsLoading(true);
+    setIsMultiSportLoading(true);
     loadFacilities()
       .then((loaded) => {
         if (!mounted) return;
-        setFacilities(loaded);
+        setMultiSportFacilities(loaded);
       })
       .catch((cause) => {
         console.error(cause);
         if (mounted) setError(t('errors.facilitiesLoadFailed'));
       })
       .finally(() => {
-        if (mounted) setIsLoading(false);
+        if (mounted) setIsMultiSportLoading(false);
       });
     return () => {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (provider !== 'pluxee' || pluxeeFacilities.length > 0) return;
+    let mounted = true;
+    setIsPluxeeLoading(true);
+    loadPluxeeFacilities()
+      .then((loaded) => {
+        if (!mounted) return;
+        setPluxeeFacilities(loaded);
+      })
+      .catch((cause) => {
+        console.error(cause);
+        if (mounted) setError('Pluxee verisi yüklenemedi.');
+      })
+      .finally(() => {
+        if (mounted) setIsPluxeeLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [pluxeeFacilities.length, provider]);
 
   useEffect(() => {
     loadFacilityChanges()
@@ -118,13 +176,13 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   }, []);
 
   useEffect(() => {
-    if (!RATINGS_API_AVAILABLE || facilities.length === 0) {
+    if (!RATINGS_API_AVAILABLE || multiSportFacilities.length === 0) {
       setIsRatingCacheLoading(false);
       return;
     }
 
     const cacheAbort = new AbortController();
-    const allIds = facilities.map((facility) => facility.id);
+    const allIds = multiSportFacilities.map((facility) => facility.id);
     setIsRatingCacheLoading(true);
 
     getRatingsSnapshot({ signal: cacheAbort.signal })
@@ -153,7 +211,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       });
 
     return () => cacheAbort.abort();
-  }, [facilities, t]);
+  }, [multiSportFacilities, t]);
 
   const allResults = useMemo(
     () => buildFacilityResults(facilities, ratings, userLocation, userStates),
@@ -209,11 +267,11 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
           lng: position.coords.longitude,
         };
         setUserLocation(location);
-        setFilters((current) => ({
-          ...current,
+        setActiveFilters({
+          ...filters,
           sort: 'distance',
-          radiusKm: current.radiusKm || 10,
-        }));
+          radiusKm: filters.radiusKm || 10,
+        });
         setMobileView('list');
         setError(null);
       },
@@ -222,7 +280,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
-  }, [t]);
+  }, [filters, setActiveFilters, t]);
 
   const togglePersonal = useCallback((facilityId: string, key: FacilityPersonalKey) => {
     setUserStates((current) => toggleFacilityFlag(current, facilityId, key));
@@ -260,6 +318,28 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const detailResult = detailPlaceId
     ? allResults.find((result) => result.facility.id === detailPlaceId)
     : undefined;
+
+  useEffect(() => {
+    if (provider !== 'pluxee') return;
+    const city = filters.city || (detailResult?.facility.provider === 'pluxee' ? detailResult.facility.city : '');
+    if (!city) return;
+    const slug = pluxeeCitySlug(city);
+    if (loadedPluxeeCitySlugs.includes(slug)) return;
+
+    let mounted = true;
+    loadPluxeeCityShard(slug)
+      .then((loaded) => {
+        if (!mounted) return;
+        setPluxeeFacilities((current) => mergeFacilitiesById(current, loaded));
+        setLoadedPluxeeCitySlugs((current) => current.includes(slug) ? current : [...current, slug]);
+      })
+      .catch((cause) => console.warn(cause));
+
+    return () => {
+      mounted = false;
+    };
+  }, [detailResult?.facility.city, detailResult?.facility.provider, filters.city, loadedPluxeeCitySlugs, provider]);
+
   const compareResults = compareIds
     .map((id) => allResults.find((result) => result.facility.id === id))
     .filter((result): result is NonNullable<typeof result> => Boolean(result));
@@ -268,13 +348,15 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     <div className="relative flex h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--text-primary)] md:flex-row">
       <div className={`absolute inset-0 z-20 md:relative md:block ${mobileView === 'list' ? 'block' : 'hidden'}`}>
         <Sidebar
+          provider={provider}
+          onProviderChange={setProvider}
           allFacilities={facilities}
           results={visibleListResults}
           totalResults={filteredResults.length}
           onLoadMore={() => setVisibleListLimit((current) => Math.min(current + LIST_RESULTS_INCREMENT, filteredResults.length))}
           filters={filters}
           setFilters={(nextFilters) => {
-            setFilters(nextFilters);
+            setActiveFilters(nextFilters);
             const selectedStillVisible = filteredResults.some((result) => result.facility.id === selectedPlaceId);
             if (!selectedStillVisible) setSelectedPlaceId(null);
           }}
@@ -291,7 +373,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
           compareResults={compareResults}
           onToggleCompare={toggleCompare}
           isLoading={isLoading}
-          isRatingCacheLoading={isRatingCacheLoading}
+          isRatingCacheLoading={activeRatingCacheLoading}
           error={error}
           stats={stats}
           facilityChanges={facilityChanges}
@@ -301,6 +383,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       <main className={`relative flex-1 md:block ${mobileView === 'map' ? 'block' : 'hidden'}`}>
         {mapsAvailable ? (
           <MapArea
+            provider={provider}
             results={filteredResults}
             selectedPlaceId={selectedPlaceId}
             onSelectPlace={(id) => setSelectedPlaceId(id)}
@@ -308,6 +391,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
             userLocation={userLocation}
             fitBoundsKey={[
               filters.query,
+              provider,
               filters.city,
               filters.district,
               filters.activity,
@@ -323,6 +407,10 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
               filters.hasPhoto,
               filters.activeOnly,
               filters.internationalOnly,
+              filters.providerService,
+              filters.serviceMode,
+              filters.pluxeePlusOnly,
+              filters.openNowOnly,
               filters.sort,
               filteredResults.length,
             ].join('|')}
@@ -359,7 +447,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
       {isAdminPanelOpen && (
         <AdminPanel
-          facilities={facilities}
+          facilities={multiSportFacilities}
           ratings={ratings}
           onClose={() => setIsAdminPanelOpen(false)}
           onRatingsChange={(freshRatings) => setRatings((current) => ({ ...current, ...freshRatings }))}
@@ -384,6 +472,17 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
       </button>
     </div>
   );
+}
+
+function mergeFacilitiesById(current: BenefitFacility[], incoming: BenefitFacility[]): BenefitFacility[] {
+  const byId = new Map(current.map((facility) => [facility.id, facility]));
+  incoming.forEach((facility) => {
+    byId.set(facility.id, {
+      ...byId.get(facility.id),
+      ...facility,
+    });
+  });
+  return Array.from(byId.values());
 }
 
 function MapKeyFallback() {

@@ -1,11 +1,12 @@
 import { AdvancedMarker, InfoWindow, Map as GoogleMap, Pin, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { Clock3, ExternalLink, MapPin, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { FacilityResult, UserLocation } from '../types';
+import type { FacilityResult, ProviderId, UserLocation } from '../types';
 import { formatOpeningHoursSummary, getGoogleMapsSearchUrl } from '../lib/facilities';
 import { useI18n } from '../lib/i18n';
 
 interface MapAreaProps {
+  provider: ProviderId;
   results: FacilityResult[];
   selectedPlaceId: string | null;
   onSelectPlace: (id: string | null) => void;
@@ -24,7 +25,7 @@ interface MarkerCluster {
 const GRID_SIZE = 0.018;
 const MAX_VIEWPORT_RESULTS = 350;
 
-const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResult, isSelected: boolean, onClick: () => void }) => {
+const FacilityMarker = ({ provider, result, isSelected, onClick }: { provider: ProviderId, result: FacilityResult, isSelected: boolean, onClick: () => void }) => {
   const { language, t, formatCount } = useI18n();
   const [markerRef, marker] = useAdvancedMarkerRef();
   const { facility, rating } = result;
@@ -45,8 +46,8 @@ const FacilityMarker = ({ result, isSelected, onClick }: { result: FacilityResul
         style={{ zIndex: isSelected ? 100 : 1 }}
       >
         <Pin
-          background={isSelected ? '#0f766e' : rating?.matchStatus === 'matched' ? '#2563eb' : '#64748b'}
-          borderColor={isSelected ? '#0f4f49' : rating?.matchStatus === 'matched' ? '#1d4ed8' : '#475569'}
+          background={markerColor(provider, isSelected, rating?.matchStatus === 'matched', Boolean(facility.googleMatch?.googlePlaceId))}
+          borderColor={markerBorderColor(provider, isSelected, rating?.matchStatus === 'matched', Boolean(facility.googleMatch?.googlePlaceId))}
           glyphColor="#ffffff"
           scale={isSelected ? 1.2 : 0.95}
         />
@@ -109,7 +110,7 @@ function ClusterMarker({ cluster }: { cluster: MarkerCluster }) {
   );
 }
 
-export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDark, userLocation, fitBoundsKey }: MapAreaProps) {
+export default function MapArea({ provider, results, selectedPlaceId, onSelectPlace, isDark, userLocation, fitBoundsKey }: MapAreaProps) {
   const { t } = useI18n();
   const map = useMap();
   const selected = results.find((result) => result.facility.id === selectedPlaceId);
@@ -183,6 +184,7 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
           return (
             <FacilityMarker
               key={cluster.id}
+              provider={provider}
               result={cluster.result}
               isSelected={isSelected}
               onClick={() => onSelectPlace(isSelected ? null : cluster.result?.facility.id || null)}
@@ -193,10 +195,22 @@ export default function MapArea({ results, selectedPlaceId, onSelectPlace, isDar
       })}
 
       <div className="absolute left-4 top-4 rounded-2xl border border-white/60 bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-950/90 dark:text-slate-200">
-        {t('map.legend')}
+        {provider === 'pluxee' ? 'Kırmızı: Pluxee · Kehribar: Google eşleşti · Siyah: grup' : t('map.legend')}
       </div>
     </GoogleMap>
   );
+}
+
+function markerColor(provider: ProviderId, isSelected: boolean, isRated: boolean, hasGoogleMatch: boolean): string {
+  if (isSelected) return provider === 'pluxee' ? '#be123c' : '#0f766e';
+  if (provider === 'pluxee') return hasGoogleMatch ? '#f59e0b' : '#e11d48';
+  return isRated ? '#2563eb' : '#64748b';
+}
+
+function markerBorderColor(provider: ProviderId, isSelected: boolean, isRated: boolean, hasGoogleMatch: boolean): string {
+  if (isSelected) return provider === 'pluxee' ? '#881337' : '#0f4f49';
+  if (provider === 'pluxee') return hasGoogleMatch ? '#b45309' : '#be123c';
+  return isRated ? '#1d4ed8' : '#475569';
 }
 
 function chooseViewportResults(
