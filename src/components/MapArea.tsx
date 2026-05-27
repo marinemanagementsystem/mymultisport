@@ -2,7 +2,7 @@ import { AdvancedMarker, InfoWindow, Map as GoogleMap, Pin, useAdvancedMarkerRef
 import { Clock3, ExternalLink, MapPin, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FacilityResult, ProviderId, UserLocation } from '../types';
-import { formatOpeningHoursSummary, getGoogleMapsSearchUrl } from '../lib/facilities';
+import { formatOpeningHoursSummary, getFacilityPosition, getGoogleMapsSearchUrl } from '../lib/facilities';
 import { useI18n } from '../lib/i18n';
 
 interface MapAreaProps {
@@ -30,11 +30,8 @@ const FacilityMarker = ({ provider, result, isSelected, onClick }: { provider: P
   const [markerRef, marker] = useAdvancedMarkerRef();
   const { facility, rating } = result;
   const hoursSummary = formatOpeningHoursSummary(rating, language);
-
-  const position = {
-    lat: facility.lat,
-    lng: facility.lng,
-  };
+  const position = getFacilityPosition(facility);
+  if (!position) return null;
 
   return (
     <>
@@ -46,8 +43,8 @@ const FacilityMarker = ({ provider, result, isSelected, onClick }: { provider: P
         style={{ zIndex: isSelected ? 100 : 1 }}
       >
         <Pin
-          background={markerColor(provider, isSelected, rating?.matchStatus === 'matched', Boolean(facility.googleMatch?.googlePlaceId))}
-          borderColor={markerBorderColor(provider, isSelected, rating?.matchStatus === 'matched', Boolean(facility.googleMatch?.googlePlaceId))}
+          background={markerColor(provider, isSelected, rating?.matchStatus === 'matched', position.source)}
+          borderColor={markerBorderColor(provider, isSelected, rating?.matchStatus === 'matched', position.source)}
           glyphColor="#ffffff"
           scale={isSelected ? 1.2 : 0.95}
         />
@@ -69,6 +66,9 @@ const FacilityMarker = ({ provider, result, isSelected, onClick }: { provider: P
               <MapPin className="mr-1 mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
               <span className="line-clamp-2">{facility.city}, {facility.address}</span>
             </p>
+            {position.source === 'approximate' && (
+              <p className="mt-2 text-xs font-semibold text-sky-700">İlçe merkezi tahmini konum</p>
+            )}
             {hoursSummary && (
               <p className="mt-2 flex items-center text-xs font-semibold text-emerald-700">
                 <Clock3 className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
@@ -114,6 +114,7 @@ export default function MapArea({ provider, results, selectedPlaceId, onSelectPl
   const { t } = useI18n();
   const map = useMap();
   const selected = results.find((result) => result.facility.id === selectedPlaceId);
+  const selectedPosition = selected ? getFacilityPosition(selected.facility) : undefined;
   const [viewportBounds, setViewportBounds] = useState<google.maps.LatLngBoundsLiteral | null>(null);
 
   const updateViewportBounds = useCallback(() => {
@@ -144,10 +145,10 @@ export default function MapArea({ provider, results, selectedPlaceId, onSelectPl
   }, [map, updateViewportBounds]);
 
   useEffect(() => {
-    if (!map || !selected) return;
-    map.panTo({ lat: selected.facility.lat, lng: selected.facility.lng });
+    if (!map || !selectedPosition) return;
+    map.panTo(selectedPosition);
     map.setZoom(15);
-  }, [map, selected]);
+  }, [map, selectedPosition]);
 
   useEffect(() => {
     if (!map || results.length === 0) return;
@@ -156,8 +157,13 @@ export default function MapArea({ provider, results, selectedPlaceId, onSelectPl
       map.setZoom(12);
       return;
     }
+    const positionedResults = results
+      .map((result) => getFacilityPosition(result.facility))
+      .filter((position): position is NonNullable<typeof position> => Boolean(position))
+      .slice(0, 200);
+    if (positionedResults.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
-    results.slice(0, 200).forEach((result) => bounds.extend({ lat: result.facility.lat, lng: result.facility.lng }));
+    positionedResults.forEach((position) => bounds.extend(position));
     map.fitBounds(bounds, 60);
   }, [fitBoundsKey, map, userLocation]);
 
@@ -195,21 +201,29 @@ export default function MapArea({ provider, results, selectedPlaceId, onSelectPl
       })}
 
       <div className="absolute left-4 top-4 rounded-2xl border border-white/60 bg-white/95 px-3 py-2 text-xs font-bold text-slate-700 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-950/90 dark:text-slate-200">
-        {provider === 'pluxee' ? 'Kırmızı: Pluxee · Kehribar: Google eşleşti · Siyah: grup' : t('map.legend')}
+        {provider === 'pluxee' ? 'Kırmızı: Pluxee konumu · Kehribar: Google tahmini · Mavi: ilçe tahmini · Siyah: grup' : t('map.legend')}
       </div>
     </GoogleMap>
   );
 }
 
-function markerColor(provider: ProviderId, isSelected: boolean, isRated: boolean, hasGoogleMatch: boolean): string {
+function markerColor(provider: ProviderId, isSelected: boolean, isRated: boolean, source: 'native' | 'google' | 'approximate'): string {
   if (isSelected) return provider === 'pluxee' ? '#be123c' : '#0f766e';
-  if (provider === 'pluxee') return hasGoogleMatch ? '#f59e0b' : '#e11d48';
+  if (provider === 'pluxee') {
+    if (source === 'google') return '#f59e0b';
+    if (source === 'approximate') return '#0284c7';
+    return '#e11d48';
+  }
   return isRated ? '#2563eb' : '#64748b';
 }
 
-function markerBorderColor(provider: ProviderId, isSelected: boolean, isRated: boolean, hasGoogleMatch: boolean): string {
+function markerBorderColor(provider: ProviderId, isSelected: boolean, isRated: boolean, source: 'native' | 'google' | 'approximate'): string {
   if (isSelected) return provider === 'pluxee' ? '#881337' : '#0f4f49';
-  if (provider === 'pluxee') return hasGoogleMatch ? '#b45309' : '#be123c';
+  if (provider === 'pluxee') {
+    if (source === 'google') return '#b45309';
+    if (source === 'approximate') return '#0369a1';
+    return '#be123c';
+  }
   return isRated ? '#1d4ed8' : '#475569';
 }
 
@@ -237,7 +251,9 @@ function includeSelectedResult(
 }
 
 function isWithinBounds(result: FacilityResult, bounds: google.maps.LatLngBoundsLiteral): boolean {
-  const { lat, lng } = result.facility;
+  const position = getFacilityPosition(result.facility);
+  if (!position) return false;
+  const { lat, lng } = position;
   if (lat < bounds.south || lat > bounds.north) return false;
   if (bounds.west <= bounds.east) return lng >= bounds.west && lng <= bounds.east;
   return lng >= bounds.west || lng <= bounds.east;
@@ -245,23 +261,27 @@ function isWithinBounds(result: FacilityResult, bounds: google.maps.LatLngBounds
 
 function buildClusters(results: FacilityResult[], selectedPlaceId: string | null): MarkerCluster[] {
   const selected = selectedPlaceId ? results.find((result) => result.facility.id === selectedPlaceId) : undefined;
+  const selectedPosition = selected ? getFacilityPosition(selected.facility) : undefined;
   const buckets = new Map<string, FacilityResult[]>();
   const clusterInput = results
-    .filter((result) => result.facility.id !== selectedPlaceId);
+    .filter((result) => result.facility.id !== selectedPlaceId)
+    .filter((result) => Boolean(getFacilityPosition(result.facility)));
 
   for (const result of clusterInput) {
-    const key = `${Math.round(result.facility.lat / GRID_SIZE)}:${Math.round(result.facility.lng / GRID_SIZE)}`;
+    const position = getFacilityPosition(result.facility);
+    if (!position) continue;
+    const key = `${Math.round(position.lat / GRID_SIZE)}:${Math.round(position.lng / GRID_SIZE)}`;
     const bucket = buckets.get(key) || [];
     bucket.push(result);
     buckets.set(key, bucket);
   }
 
   const clusters: MarkerCluster[] = [];
-  if (selected) {
+  if (selected && selectedPosition) {
     clusters.push({
       id: `facility-${selected.facility.id}`,
       count: 1,
-      position: { lat: selected.facility.lat, lng: selected.facility.lng },
+      position: selectedPosition,
       result: selected,
     });
   }
@@ -269,21 +289,27 @@ function buildClusters(results: FacilityResult[], selectedPlaceId: string | null
   for (const [key, bucket] of buckets) {
     if (bucket.length === 1) {
       const result = bucket[0];
+      const position = getFacilityPosition(result.facility);
+      if (!position) continue;
       clusters.push({
         id: `facility-${result.facility.id}`,
         count: 1,
-        position: { lat: result.facility.lat, lng: result.facility.lng },
+        position,
         result,
       });
       continue;
     }
 
+    const positions = bucket
+      .map((result) => getFacilityPosition(result.facility))
+      .filter((position): position is NonNullable<typeof position> => Boolean(position));
+    if (positions.length === 0) continue;
     clusters.push({
       id: `cluster-${key}`,
       count: bucket.length,
       position: {
-        lat: bucket.reduce((sum, result) => sum + result.facility.lat, 0) / bucket.length,
-        lng: bucket.reduce((sum, result) => sum + result.facility.lng, 0) / bucket.length,
+        lat: positions.reduce((sum, position) => sum + position.lat, 0) / positions.length,
+        lng: positions.reduce((sum, position) => sum + position.lng, 0) / positions.length,
       },
     });
   }

@@ -1,17 +1,42 @@
 {
-  "runId": "2026-05-27T22-23-43-036Z",
-  "generatedAt": "2026-05-27T22:23:43.037Z",
+  "runId": "2026-05-27T23-38-19-105Z",
+  "generatedAt": "2026-05-27T23:38:19.105Z",
   "services": [
     "3",
     "4",
     "9"
   ],
+  "locations": [
+    {
+      "code": "73",
+      "label": "Edirne",
+      "city": "Edirne"
+    },
+    {
+      "code": "20",
+      "label": "Çanakkale",
+      "city": "Çanakkale"
+    },
+    {
+      "code": "59",
+      "label": "Tekirdağ",
+      "city": "Tekirdağ"
+    }
+  ],
+  "includeDefaultLocation": false,
   "sourceCounts": {
-    "3": 21,
-    "4": 21,
-    "9": 21
+    "3@73": 168,
+    "3@20": 320,
+    "3@59": 519,
+    "4@73": 135,
+    "4@20": 215,
+    "4@59": 410,
+    "9@73": 35,
+    "9@20": 106,
+    "9@59": 108
   },
-  "mapped": 2,
-  "unmapped": 61,
-  "cityCount": 1
+  "records": 2016,
+  "mapped": 0,
+  "unmapped": 2016,
+  "cityCount": 3
 }

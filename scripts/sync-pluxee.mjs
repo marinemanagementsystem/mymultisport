@@ -6,6 +6,7 @@ import {
   parsePluxeeDetailHtml,
   PLUXEE_BASE_URL,
   PLUXEE_SERVICES,
+  resolvePluxeeLocationTargets,
 } from './lib/pluxee-import.mjs';
 
 const DEFAULT_OUT_DIR = new URL('../public/data/providers/pluxee', import.meta.url).pathname;
@@ -15,53 +16,63 @@ const options = parseArgs(process.argv.slice(2));
 const runId = options.runId || new Date().toISOString().replace(/[:.]/g, '-');
 const generatedAt = new Date().toISOString();
 const services = options.services.length > 0 ? options.services : Object.keys(PLUXEE_SERVICES);
+const locationTargets = resolvePluxeeLocationTargets(options.locations);
+const importLocations = [
+  ...(options.includeDefaultLocation || locationTargets.length === 0 ? [null] : []),
+  ...locationTargets,
+];
 
 const allMerchants = [];
 const sourceCounts = {};
 
 for (const serviceId of services) {
-  const rows = await fetchServiceRows(serviceId);
-  sourceCounts[serviceId] = rows.length;
-  const rowsToDetail = options.details === undefined ? rows : rows.slice(0, options.details);
-  let detailCount = 0;
+  for (const locationTarget of importLocations) {
+    const rows = await fetchServiceRows(serviceId, locationTarget);
+    sourceCounts[sourceCountKey(serviceId, locationTarget)] = rows.length;
+    const rowsToDetail = options.details === undefined ? rows : rows.slice(0, options.details);
+    let detailCount = 0;
 
-  for (const row of rowsToDetail) {
-    const detail = await fetchMerchantDetail(row.url).catch((error) => {
-      console.warn(`detail_failed service=${serviceId} page=${row.__sourcePage} url=${row.url || '-'} reason=${error.message}`);
-      return {};
-    });
-    allMerchants.push(normalizePluxeeMerchant({
-      serviceId,
-      sourcePage: row.__sourcePage,
-      row,
-      detail,
-    }));
-    detailCount += 1;
-    if (options.delayMs > 0) await sleep(options.delayMs);
-  }
-
-  if (options.details !== undefined && rows.length > rowsToDetail.length) {
-    for (const row of rows.slice(rowsToDetail.length)) {
+    for (const row of rowsToDetail) {
+      const detail = await fetchMerchantDetail(row.url).catch((error) => {
+        console.warn(`detail_failed service=${serviceId} location=${locationTarget?.code || 'default'} page=${row.__sourcePage} url=${row.url || '-'} reason=${error.message}`);
+        return {};
+      });
       allMerchants.push(normalizePluxeeMerchant({
         serviceId,
         sourcePage: row.__sourcePage,
+        sourceLocation: locationTarget,
         row,
-        detail: {},
+        detail,
       }));
+      detailCount += 1;
+      if (options.delayMs > 0) await sleep(options.delayMs);
     }
-  }
 
-  console.log(`service=${serviceId} list_rows=${rows.length} detail_pages=${detailCount}`);
+    if (options.details !== undefined && rows.length > rowsToDetail.length) {
+      for (const row of rows.slice(rowsToDetail.length)) {
+        allMerchants.push(normalizePluxeeMerchant({
+          serviceId,
+          sourcePage: row.__sourcePage,
+          sourceLocation: locationTarget,
+          row,
+          detail: {},
+        }));
+      }
+    }
+
+    console.log(`service=${serviceId} location=${locationTarget?.label || 'default'} list_rows=${rows.length} detail_pages=${detailCount}`);
+  }
 }
 
 const snapshot = buildPluxeeSnapshot(allMerchants, {
   runId,
   generatedAt,
   sourceServices: services,
+  sourceLocations: importLocations.filter(Boolean),
   sourceCounts,
 });
 
-console.log(`mapped=${snapshot.index.length} unmapped=${snapshot.unmapped.length} cities=${snapshot.manifest.cities.length}`);
+console.log(`records=${snapshot.index.length} mapped=${snapshot.manifest.totalMapped} unmapped=${snapshot.unmapped.length} cities=${snapshot.manifest.cities.length}`);
 
 if (options.dryRun) {
   console.log('dry-run: no files written');
@@ -75,8 +86,11 @@ await writeFile(
     runId,
     generatedAt,
     services,
+    locations: importLocations.filter(Boolean),
+    includeDefaultLocation: options.includeDefaultLocation || locationTargets.length === 0,
     sourceCounts,
-    mapped: snapshot.index.length,
+    records: snapshot.index.length,
+    mapped: snapshot.manifest.totalMapped,
     unmapped: snapshot.unmapped.length,
     cityCount: snapshot.manifest.cities.length,
   }, null, 2)}\n`,
@@ -84,27 +98,37 @@ await writeFile(
 
 console.log(`wrote Pluxee snapshot to ${options.outDir}`);
 
-async function fetchServiceRows(serviceId) {
-  const first = await fetchSearchPage(serviceId, 1);
+async function fetchServiceRows(serviceId, locationTarget) {
+  const first = await fetchSearchPage(serviceId, locationTarget, 1);
   const pageCount = Math.max(1, Number(first.pages || 1));
   const maxPages = options.pages === undefined ? pageCount : Math.min(pageCount, options.pages);
-  const rows = annotateRows(first.data || [], 1);
+  const rows = annotateRows(first.data || [], 1, locationTarget);
 
   for (let page = 2; page <= maxPages; page += 1) {
-    const payload = await fetchSearchPage(serviceId, page);
-    rows.push(...annotateRows(payload.data || [], page));
+    const payload = await fetchSearchPage(serviceId, locationTarget, page);
+    const pageRows = payload.data || [];
+    if (pageRows.length === 0) break;
+    rows.push(...annotateRows(pageRows, page, locationTarget));
     if (options.delayMs > 0) await sleep(options.delayMs);
   }
 
   return rows;
 }
 
-async function fetchSearchPage(serviceId, page) {
-  const cachePath = path.join(options.cacheDir, 'raw', `service-${serviceId}`, `page-${page}.json`);
+async function fetchSearchPage(serviceId, locationTarget, page) {
+  const locationCacheKey = locationTarget?.code || 'default';
+  const cachePath = path.join(options.cacheDir, 'raw', `service-${serviceId}`, `location-${locationCacheKey}`, `page-${page}.json`);
   const cached = await readJson(cachePath);
   if (cached) return cached;
 
-  const url = `${PLUXEE_BASE_URL}/ajax/search-merchant?urun=${encodeURIComponent(serviceId)}&pagination=${encodeURIComponent(page)}`;
+  const searchParams = new URLSearchParams({
+    urun: String(serviceId),
+    pagination: String(page),
+  });
+  if (locationTarget?.code) {
+    searchParams.set('konum', locationTarget.code);
+  }
+  const url = `${PLUXEE_BASE_URL}/ajax/search-merchant?${searchParams.toString()}`;
   const payload = await fetchJson(url);
   await maybeWriteCache(cachePath, payload);
   return payload;
@@ -122,30 +146,42 @@ async function fetchMerchantDetail(urlPath) {
 }
 
 async function fetchJson(url) {
-  const response = await fetchWithTimeout(url, {
-    headers: {
-      Accept: 'application/json, text/javascript, */*; q=0.01',
-      'User-Agent': 'MyMultiSport Pluxee one-time import',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Pluxee request failed ${response.status}: ${url}`);
+  for (let attempt = 1; attempt <= options.retries + 1; attempt += 1) {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'User-Agent': 'MyMultiSport Pluxee one-time import',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+    if (response.ok) return response.json();
+    if (!isRetryableStatus(response.status) || attempt > options.retries) {
+      throw new Error(`Pluxee request failed ${response.status}: ${url}`);
+    }
+    const waitMs = options.retryDelayMs * attempt;
+    console.warn(`retry_json status=${response.status} attempt=${attempt} wait_ms=${waitMs} url=${url}`);
+    await sleep(waitMs);
   }
-  return response.json();
+  throw new Error(`Pluxee request failed: ${url}`);
 }
 
 async function fetchText(url) {
-  const response = await fetchWithTimeout(url, {
-    headers: {
-      Accept: 'text/html,application/xhtml+xml',
-      'User-Agent': 'MyMultiSport Pluxee one-time import',
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Pluxee detail request failed ${response.status}: ${url}`);
+  for (let attempt = 1; attempt <= options.retries + 1; attempt += 1) {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml',
+        'User-Agent': 'MyMultiSport Pluxee one-time import',
+      },
+    });
+    if (response.ok) return response.text();
+    if (!isRetryableStatus(response.status) || attempt > options.retries) {
+      throw new Error(`Pluxee detail request failed ${response.status}: ${url}`);
+    }
+    const waitMs = options.retryDelayMs * attempt;
+    console.warn(`retry_detail status=${response.status} attempt=${attempt} wait_ms=${waitMs} url=${url}`);
+    await sleep(waitMs);
   }
-  return response.text();
+  throw new Error(`Pluxee detail request failed: ${url}`);
 }
 
 async function writeSnapshot(snapshot, outDir) {
@@ -158,8 +194,12 @@ async function writeSnapshot(snapshot, outDir) {
   )));
 }
 
-function annotateRows(rows, page) {
-  return rows.map((row) => ({ ...row, __sourcePage: page }));
+function annotateRows(rows, page, locationTarget) {
+  return rows.map((row) => ({ ...row, __sourcePage: page, __sourceLocation: locationTarget }));
+}
+
+function sourceCountKey(serviceId, locationTarget) {
+  return locationTarget?.code ? `${serviceId}@${locationTarget.code}` : String(serviceId);
 }
 
 async function maybeWriteCache(filePath, payload) {
@@ -204,6 +244,10 @@ function parseArgs(args) {
     timeoutMs: 15000,
     noCache: false,
     runId: '',
+    locations: [],
+    includeDefaultLocation: false,
+    retries: 4,
+    retryDelayMs: 3000,
   };
 
   for (const arg of args) {
@@ -217,17 +261,33 @@ function parseArgs(args) {
     else if (arg.startsWith('--delay-ms=')) parsed.delayMs = Number(arg.split('=')[1]);
     else if (arg.startsWith('--timeout-ms=')) parsed.timeoutMs = Number(arg.split('=')[1]);
     else if (arg.startsWith('--run-id=')) parsed.runId = arg.split('=')[1];
+    else if (arg.startsWith('--locations=')) parsed.locations.push(...splitCsvArg(arg));
+    else if (arg.startsWith('--cities=')) parsed.locations.push(...splitCsvArg(arg));
+    else if (arg.startsWith('--location-group=')) parsed.locations.push(...splitCsvArg(arg));
+    else if (arg === '--include-default-location') parsed.includeDefaultLocation = true;
+    else if (arg.startsWith('--retries=')) parsed.retries = Number(arg.split('=')[1]);
+    else if (arg.startsWith('--retry-delay-ms=')) parsed.retryDelayMs = Number(arg.split('=')[1]);
   }
 
   if (Number.isNaN(parsed.pages)) parsed.pages = undefined;
   if (Number.isNaN(parsed.details)) parsed.details = undefined;
   if (!Number.isFinite(parsed.delayMs)) parsed.delayMs = 120;
   if (!Number.isFinite(parsed.timeoutMs)) parsed.timeoutMs = 15000;
+  if (!Number.isFinite(parsed.retries)) parsed.retries = 4;
+  if (!Number.isFinite(parsed.retryDelayMs)) parsed.retryDelayMs = 3000;
   return parsed;
+}
+
+function splitCsvArg(arg) {
+  return arg.split('=').slice(1).join('=').split(',').map((value) => value.trim()).filter(Boolean);
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableStatus(status) {
+  return status === 403 || status === 408 || status === 429 || status >= 500;
 }
 
 async function fetchWithTimeout(url, init) {

@@ -8,6 +8,18 @@ export const PLUXEE_SERVICES = {
   9: { id: '9', label: 'Pluxee Gıda', slug: 'gida' },
 };
 
+export const PLUXEE_CITY_LOCATIONS = {
+  edirne: { code: '73', label: 'Edirne', city: 'Edirne' },
+  canakkale: { code: '20', label: 'Çanakkale', city: 'Çanakkale' },
+  tekirdag: { code: '59', label: 'Tekirdağ', city: 'Tekirdağ' },
+  istanbul: { code: '34', label: 'İstanbul', city: 'İstanbul' },
+};
+
+export const PLUXEE_LOCATION_GROUPS = {
+  batimarmara: ['edirne', 'canakkale', 'tekirdag'],
+  trakya: ['edirne', 'canakkale', 'tekirdag'],
+};
+
 const SERVICE_MODES = [
   ['paket', ['paket servis', 'paket']],
   ['masa', ['masa servisi', 'masaya servis', 'masa']],
@@ -15,7 +27,7 @@ const SERVICE_MODES = [
   ['catering', ['catering']],
 ];
 
-export function normalizePluxeeMerchant({ serviceId, sourcePage, row, detail = {} }) {
+export function normalizePluxeeMerchant({ serviceId, sourcePage, sourceLocation = undefined, row, detail = {} }) {
   const service = PLUXEE_SERVICES[String(serviceId)] || { id: String(serviceId), label: `Pluxee ${serviceId}`, slug: String(serviceId) };
   const location = parseDisplayLocation(row.display_location || detail.displayLocation || '');
   const sourceUrl = absolutePluxeeUrl(row.url || detail.url || '');
@@ -57,6 +69,7 @@ export function normalizePluxeeMerchant({ serviceId, sourcePage, row, detail = {
     serviceModes,
     pluxeePlus: Boolean(row.has_promotion),
     isOpenNow: Boolean(row.is_open),
+    locationStatus: isValidCoordinate(lat, lng) ? 'pluxee' : 'google_pending',
     sourceStatus: 'current',
     importMeta: {
       sourcePage,
@@ -64,6 +77,11 @@ export function normalizePluxeeMerchant({ serviceId, sourcePage, row, detail = {
       displayDistanceKm: parseDistance(row.display_distance),
       icon: cleanText(row.icon || ''),
       branchId: row.branchId ?? null,
+      sourceLocation: sourceLocation ? removeEmpty({
+        code: sourceLocation.code,
+        label: sourceLocation.label,
+        city: sourceLocation.city,
+      }) : undefined,
     },
   };
 
@@ -144,12 +162,16 @@ export function buildPluxeeSnapshot(merchants, options = {}) {
   const unmapped = merged
     .filter((merchant) => !isValidCoordinate(merchant.lat, merchant.lng))
     .sort(comparePluxeePlace);
-  const cities = Array.from(new Set(mapped.map((place) => place.city).filter(Boolean))).sort(compareTr);
+  const index = [
+    ...mapped.map((merchant) => ({ ...merchant, locationStatus: 'pluxee' })),
+    ...unmapped.map((merchant) => ({ ...merchant, locationStatus: 'google_pending' })),
+  ];
+  const cities = Array.from(new Set(index.map((place) => place.city).filter(Boolean))).sort(compareTr);
   const cityShards = Object.fromEntries(cities.map((city) => [
     citySlug(city),
-    mapped.filter((place) => place.city === city),
+    index.filter((place) => place.city === city),
   ]));
-  const serviceCounts = countServices(mapped);
+  const serviceCounts = countServices(index);
   const manifest = {
     provider: 'pluxee',
     runId,
@@ -158,8 +180,10 @@ export function buildPluxeeSnapshot(merchants, options = {}) {
     source: {
       baseUrl: PLUXEE_BASE_URL,
       services: options.sourceServices || Object.keys(PLUXEE_SERVICES),
+      locations: options.sourceLocations || [],
       sourceCounts: options.sourceCounts || {},
     },
+    totalRecords: index.length,
     totalMapped: mapped.length,
     totalUnmapped: unmapped.length,
     serviceCounts,
@@ -172,7 +196,7 @@ export function buildPluxeeSnapshot(merchants, options = {}) {
 
   return {
     manifest,
-    index: mapped,
+    index,
     cityShards,
     unmapped,
   };
@@ -217,6 +241,41 @@ export function serviceLabel(serviceId) {
   return PLUXEE_SERVICES[String(serviceId)]?.label || `Pluxee ${serviceId}`;
 }
 
+export function resolvePluxeeLocationTargets(values = []) {
+  const targets = [];
+
+  for (const rawValue of values) {
+    const value = cleanText(rawValue);
+    if (!value) continue;
+
+    const key = normalizeKey(value);
+    const group = PLUXEE_LOCATION_GROUPS[key];
+    if (group) {
+      targets.push(...resolvePluxeeLocationTargets(group));
+      continue;
+    }
+
+    const known = PLUXEE_CITY_LOCATIONS[key];
+    if (known) {
+      targets.push(known);
+      continue;
+    }
+
+    if (/^\d+(?:-\d+){0,2}$/.test(value)) {
+      targets.push({ code: value, label: `Konum ${value}`, city: '' });
+      continue;
+    }
+
+    throw new Error(`Unknown Pluxee location target: ${rawValue}`);
+  }
+
+  const uniqueTargets = new Map();
+  for (const target of targets) {
+    uniqueTargets.set(target.code, target);
+  }
+  return Array.from(uniqueTargets.values());
+}
+
 export function absolutePluxeeUrl(value) {
   if (!value) return '';
   try {
@@ -248,6 +307,7 @@ function mergeTwoPluxeeMerchants(a, b) {
     serviceModes,
     pluxeePlus,
     isOpenNow: Boolean(a.isOpenNow || b.isOpenNow),
+    locationStatus: isValidCoordinate(a.lat, a.lng) || isValidCoordinate(b.lat, b.lng) ? 'pluxee' : 'google_pending',
     sourceUrls: uniqueSorted([a.sourceUrl, b.sourceUrl, ...(a.sourceUrls || []), ...(b.sourceUrls || [])].filter(Boolean)),
   };
   merged.fingerprint = fingerprintPluxeePlace(merged);

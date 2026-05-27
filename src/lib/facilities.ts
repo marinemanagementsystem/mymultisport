@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import type { LanguageCode } from './i18n';
 import { getWeekdayLabel, translate } from './i18n';
+import { getPluxeeApproximateLocation } from './pluxeeApproximateLocations';
 
 const BENEFIT_FACILITY_DETAIL_BASE = 'https://benefitsystems.com.tr/tesisler/';
 const PLUXEE_DATA_BASE = '/data/providers/pluxee';
@@ -36,7 +37,7 @@ export async function loadFacilities(): Promise<BenefitFacility[]> {
 }
 
 export async function loadPluxeeFacilities(): Promise<BenefitFacility[]> {
-  const manifest = await fetchCachedJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
+  const manifest = await fetchFreshJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
   const facilities = await fetchCachedJson<BenefitFacility[]>(
     `${PLUXEE_DATA_BASE}/index-tr.json`,
     manifest.snapshotVersion,
@@ -47,7 +48,7 @@ export async function loadPluxeeFacilities(): Promise<BenefitFacility[]> {
 }
 
 export async function loadPluxeeCityShard(citySlug: string): Promise<BenefitFacility[]> {
-  const manifest = await fetchCachedJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
+  const manifest = await fetchFreshJson<{ snapshotVersion?: string }>(`${PLUXEE_DATA_BASE}/manifest.json`);
   const facilities = await fetchCachedJson<BenefitFacility[]>(
     `${PLUXEE_DATA_BASE}/cities/${encodeURIComponent(citySlug)}.json`,
     manifest.snapshotVersion,
@@ -55,6 +56,15 @@ export async function loadPluxeeCityShard(citySlug: string): Promise<BenefitFaci
   return facilities
     .map((facility) => ({ ...facility, provider: 'pluxee' as const }))
     .filter(isUsableFacility);
+}
+
+async function fetchFreshJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Veri yüklenemedi (${response.status}): ${url}`);
+  return response.json();
 }
 
 async function fetchCachedJson<T>(url: string, version = ''): Promise<T> {
@@ -77,6 +87,10 @@ async function fetchCachedJson<T>(url: string, version = ''): Promise<T> {
 }
 
 export function isUsableFacility(facility: BenefitFacility): boolean {
+  if (facility.provider === 'pluxee') {
+    return Boolean(facility.id) && Boolean(facility.name);
+  }
+
   return (
     Boolean(facility.id) &&
     Boolean(facility.name) &&
@@ -94,9 +108,42 @@ export function buildFacilityResults(
   return facilities.map((facility) => ({
     facility,
     rating: ratings[facility.id],
-    distanceKm: userLocation ? distanceKm(userLocation, facility) : undefined,
+    distanceKm: userLocation ? distanceToFacilityKm(userLocation, facility) : undefined,
     userState: userStates[facility.id],
   }));
+}
+
+export function getFacilityPosition(facility: BenefitFacility): { lat: number; lng: number; source: 'native' | 'google' | 'approximate' } | undefined {
+  if (Number.isFinite(facility.lat) && Number.isFinite(facility.lng)) {
+    return {
+      lat: Number(facility.lat),
+      lng: Number(facility.lng),
+      source: 'native',
+    };
+  }
+
+  if (Number.isFinite(facility.googleLocation?.lat) && Number.isFinite(facility.googleLocation?.lng)) {
+    return {
+      lat: Number(facility.googleLocation?.lat),
+      lng: Number(facility.googleLocation?.lng),
+      source: 'google',
+    };
+  }
+
+  const approximateLocation = getPluxeeApproximateLocation(facility);
+  if (approximateLocation) {
+    return {
+      ...approximateLocation,
+      source: 'approximate',
+    };
+  }
+
+  return undefined;
+}
+
+function distanceToFacilityKm(from: UserLocation, facility: BenefitFacility): number | undefined {
+  const position = getFacilityPosition(facility);
+  return position ? distanceKm(from, position) : undefined;
 }
 
 export function filterAndSortFacilities(results: FacilityResult[], filters: FilterState): FacilityResult[] {

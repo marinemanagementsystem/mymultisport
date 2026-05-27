@@ -3,6 +3,7 @@ export type HoursFilterMode = '' | 'open_now' | 'closed_now' | 'open_at' | 'open
 export type ProviderId = 'multisport' | 'pluxee';
 export type PluxeeServiceId = '3' | '4' | '9';
 export type PluxeeServiceMode = 'paket' | 'masa' | 'alGotur' | 'catering';
+export type PluxeeLocationStatus = 'pluxee' | 'google_pending' | 'google_resolved' | 'missing';
 
 export interface BenefitActivity {
   name: string;
@@ -18,8 +19,8 @@ export interface BenefitFacility {
   provider?: ProviderId;
   name: string;
   slug: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   thumbnail?: string;
   address: string;
   city: string;
@@ -43,12 +44,15 @@ export interface BenefitFacility {
   pluxeePlus?: boolean;
   isOpenNow?: boolean;
   googleMatch?: PluxeeGoogleMatch;
+  googleLocation?: PluxeePlaceLocation;
+  locationStatus?: PluxeeLocationStatus;
   fingerprint?: string;
 }
 
 export interface PluxeeGoogleMatch {
   facilityId: string;
   googlePlaceId?: string;
+  candidatePlaceIds?: string[];
   matchStatus: 'matched' | 'ambiguous' | 'not_found' | 'error';
   matchScore?: number;
   distanceMeters?: number;
@@ -56,6 +60,28 @@ export interface PluxeeGoogleMatch {
   pluxeeFingerprint: string;
   queryUsed: string;
   error?: string;
+}
+
+export interface PluxeePlaceLocation {
+  placeId: string;
+  lat: number;
+  lng: number;
+  fetchedAt: string;
+  expiresAt: string;
+  source: 'google_places_details';
+}
+
+export interface PluxeeLocationsResponse {
+  locations: PluxeePlaceLocation[];
+  missingPlaceIds: string[];
+  pendingQuota: boolean;
+  cacheHitCount: number;
+  googleLookupCount: number;
+  limits?: {
+    batch: number;
+    daily: number;
+    monthly: number;
+  };
 }
 
 export interface GoogleRatingMatch {
@@ -118,6 +144,23 @@ export interface AdminRatingsStatus {
     snapshotShards: number;
   };
   snapshot: RatingsSnapshotMeta | null;
+  time: string;
+}
+
+export interface AdminPluxeeStatus {
+  usage: {
+    daily: AdminUsageCounter;
+    monthly: AdminUsageCounter;
+  };
+  limits: {
+    batch: number;
+    daily: number;
+    monthly: number;
+    cacheDays: number;
+  };
+  cache: {
+    locationCount: number;
+  };
   time: string;
 }
 

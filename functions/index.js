@@ -5,6 +5,12 @@ const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const crypto = require('crypto');
+const {
+  MAX_PLUXEE_LOCATION_BATCH,
+  PLUXEE_LOCATION_CACHE_DAYS,
+  resolvePluxeeLocations,
+  sanitizePlaceIds,
+} = require('./pluxee-location-service');
 
 initializeApp();
 setGlobalOptions({ region: 'europe-west1', maxInstances: 10, memory: '512MiB' });
@@ -21,11 +27,16 @@ const MONTHLY_USAGE_COLLECTION = 'googlePlacesMonthlyUsage';
 const SNAPSHOT_META_COLLECTION = 'googleRatingSnapshotMeta';
 const SNAPSHOT_SHARDS_COLLECTION = 'googleRatingSnapshotShards';
 const SNAPSHOT_META_DOC = 'current';
+const PLUXEE_LOCATION_CACHE_COLLECTION = 'pluxeePlaceLocationCache';
+const PLUXEE_LOCATION_DAILY_USAGE_COLLECTION = 'pluxeePlaceLocationDailyUsage';
+const PLUXEE_LOCATION_MONTHLY_USAGE_COLLECTION = 'pluxeePlaceLocationMonthlyUsage';
 const BENEFIT_SOURCE_URL = 'https://benefitsystems.com.tr/facilities-tr.json';
 const MAX_GET_BATCH = 100;
 const MAX_ENRICH_BATCH = Number(process.env.MAX_ENRICH_BATCH || 50);
 const DAILY_ENRICH_LIMIT = Number(process.env.DAILY_ENRICH_LIMIT || 50);
 const MONTHLY_ENRICH_LIMIT = Number(process.env.MONTHLY_ENRICH_LIMIT || 900);
+const DAILY_PLUXEE_LOCATION_LIMIT = Number(process.env.PLUXEE_LOCATION_DAILY_LIMIT || 500);
+const MONTHLY_PLUXEE_LOCATION_LIMIT = Number(process.env.PLUXEE_LOCATION_MONTHLY_LIMIT || 10000);
 const SNAPSHOT_SHARD_COUNT = Number(process.env.RATING_SNAPSHOT_SHARD_COUNT || 40);
 
 exports.api = onRequest({
@@ -60,6 +71,11 @@ exports.api = onRequest({
       return;
     }
 
+    if (req.method === 'POST' && path === '/pluxee/locations') {
+      await handleGetPluxeeLocations(req, res);
+      return;
+    }
+
     if (req.method === 'POST' && path === '/ratings/enrich') {
       requireAdmin(req);
       await handleEnrichRatings(req, res);
@@ -69,6 +85,12 @@ exports.api = onRequest({
     if (req.method === 'GET' && path === '/admin/ratings/status') {
       requireAdmin(req);
       await handleAdminRatingsStatus(req, res);
+      return;
+    }
+
+    if (req.method === 'GET' && path === '/admin/pluxee/status') {
+      requireAdmin(req);
+      await handleAdminPluxeeStatus(req, res);
       return;
     }
 
@@ -134,6 +156,30 @@ async function handleGetRatingsSnapshot(req, res) {
   });
 
   res.json({ meta, ratings });
+}
+
+async function handleGetPluxeeLocations(req, res) {
+  const placeIds = sanitizePlaceIds(req.body?.placeIds);
+  if (placeIds.length === 0) {
+    res.json(pluxeeLocationResponse({ locations: [], missingPlaceIds: [], pendingQuota: false, cacheHitCount: 0, googleLookupCount: 0 }));
+    return;
+  }
+
+  const result = await resolvePluxeeLocations({
+    placeIds,
+    now: new Date(),
+    getCachedLocation: async (placeId) => {
+      const snapshot = await db.collection(PLUXEE_LOCATION_CACHE_COLLECTION).doc(safeDocId(placeId)).get();
+      return snapshot.exists ? snapshot.data() : null;
+    },
+    reserveQuota: reservePluxeeLocationQuota,
+    fetchLocation: fetchGooglePlaceLocation,
+    writeCachedLocation: async (placeId, payload) => {
+      await db.collection(PLUXEE_LOCATION_CACHE_COLLECTION).doc(safeDocId(placeId)).set(payload);
+    },
+  });
+
+  res.json(pluxeeLocationResponse(result));
 }
 
 async function handleEnrichRatings(req, res) {
@@ -211,6 +257,31 @@ async function handleAdminRatingsStatus(req, res) {
       snapshotShards: SNAPSHOT_SHARD_COUNT,
     },
     snapshot: snapshotMeta.exists ? snapshotMeta.data() : null,
+    time: new Date().toISOString(),
+  });
+}
+
+async function handleAdminPluxeeStatus(req, res) {
+  const [dailyUsage, monthlyUsage, locationCount] = await Promise.all([
+    db.collection(PLUXEE_LOCATION_DAILY_USAGE_COLLECTION).doc(todayKey()).get(),
+    db.collection(PLUXEE_LOCATION_MONTHLY_USAGE_COLLECTION).doc(monthKey()).get(),
+    countCollection(PLUXEE_LOCATION_CACHE_COLLECTION),
+  ]);
+
+  res.json({
+    usage: {
+      daily: usagePayload(dailyUsage, DAILY_PLUXEE_LOCATION_LIMIT),
+      monthly: usagePayload(monthlyUsage, MONTHLY_PLUXEE_LOCATION_LIMIT),
+    },
+    limits: {
+      batch: MAX_PLUXEE_LOCATION_BATCH,
+      daily: DAILY_PLUXEE_LOCATION_LIMIT,
+      monthly: MONTHLY_PLUXEE_LOCATION_LIMIT,
+      cacheDays: PLUXEE_LOCATION_CACHE_DAYS,
+    },
+    cache: {
+      locationCount,
+    },
     time: new Date().toISOString(),
   });
 }
@@ -612,6 +683,81 @@ async function reserveQuota(count) {
   });
 }
 
+async function reservePluxeeLocationQuota(count) {
+  if (!count) return;
+  const dailyRef = db.collection(PLUXEE_LOCATION_DAILY_USAGE_COLLECTION).doc(todayKey());
+  const monthlyRef = db.collection(PLUXEE_LOCATION_MONTHLY_USAGE_COLLECTION).doc(monthKey());
+  const now = new Date().toISOString();
+
+  await db.runTransaction(async (transaction) => {
+    const daily = await transaction.get(dailyRef);
+    const monthly = await transaction.get(monthlyRef);
+    const dailyCount = daily.exists ? Number(daily.data().count || 0) : 0;
+    const monthlyCount = monthly.exists ? Number(monthly.data().count || 0) : 0;
+
+    if (dailyCount + count > DAILY_PLUXEE_LOCATION_LIMIT || monthlyCount + count > MONTHLY_PLUXEE_LOCATION_LIMIT) {
+      const error = new Error('pluxee_location_limit_reached');
+      error.statusCode = 429;
+      error.code = 'pending_quota';
+      throw error;
+    }
+
+    transaction.set(dailyRef, {
+      count: dailyCount + count,
+      limit: DAILY_PLUXEE_LOCATION_LIMIT,
+      updatedAt: now,
+    }, { merge: true });
+    transaction.set(monthlyRef, {
+      count: monthlyCount + count,
+      limit: MONTHLY_PLUXEE_LOCATION_LIMIT,
+      updatedAt: now,
+    }, { merge: true });
+  });
+}
+
+async function fetchGooglePlaceLocation(placeId) {
+  const apiKey = GOOGLE_MAPS_PLATFORM_KEY.value() || process.env.GOOGLE_MAPS_PLATFORM_KEY;
+  if (!apiKey) {
+    const error = new Error('GOOGLE_MAPS_PLATFORM_KEY secret is not configured');
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const placePath = String(placeId).startsWith('places/')
+    ? String(placeId).split('/').map((part) => encodeURIComponent(part)).join('/')
+    : `places/${encodeURIComponent(placeId)}`;
+  const response = await fetch(`https://places.googleapis.com/v1/${placePath}`, {
+    headers: {
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask': 'id,location',
+    },
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    logger.warn('Pluxee Place Details location error', { placeId, status: response.status, message });
+    return null;
+  }
+
+  const payload = await response.json();
+  return payload.location || null;
+}
+
+function pluxeeLocationResponse(result) {
+  return {
+    ...result,
+    limits: {
+      batch: MAX_PLUXEE_LOCATION_BATCH,
+      daily: DAILY_PLUXEE_LOCATION_LIMIT,
+      monthly: MONTHLY_PLUXEE_LOCATION_LIMIT,
+    },
+  };
+}
+
+function safeDocId(value) {
+  return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
 async function writeRatingsSnapshot(ratings, rebuiltAt) {
   const shardCount = SNAPSHOT_SHARD_COUNT;
   const shards = Array.from({ length: shardCount }, () => []);
@@ -650,6 +796,16 @@ function usagePayload(snapshot, limit) {
     limit,
     updatedAt: data.updatedAt,
   };
+}
+
+async function countCollection(collectionName) {
+  try {
+    const snapshot = await db.collection(collectionName).count().get();
+    return Number(snapshot.data().count || 0);
+  } catch (error) {
+    logger.warn('Collection count failed', { collectionName, message: error.message });
+    return 0;
+  }
 }
 
 function shardId(index) {

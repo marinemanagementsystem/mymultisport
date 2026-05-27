@@ -1,57 +1,60 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { AlertTriangle, Database, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
-import type { AdminRatingsStatus, BenefitFacility, GoogleRatingMatch } from '../types';
+import type { AdminPluxeeStatus, AdminRatingsStatus, BenefitFacility, GoogleRatingMatch, ProviderId } from '../types';
 import {
   adminEnrichRatings,
   ENRICH_BATCH_SIZE,
+  getAdminPluxeeStatus,
   getAdminRatingsStatus,
-  getFacilityFingerprint,
   getRatingsSnapshot,
   rebuildRatingSnapshot,
 } from '../lib/ratingsApi';
 import type { AdminCredentials } from '../lib/ratingsApi';
 import { useI18n } from '../lib/i18n';
+import {
+  buildMultiSportAdminStats,
+  buildPluxeeAdminStats,
+  needsDeltaRefresh,
+  needsMissingRefresh,
+} from '../lib/adminMetrics';
 
 interface AdminPanelProps {
+  provider: ProviderId;
   facilities: BenefitFacility[];
   ratings: Record<string, GoogleRatingMatch>;
   onClose: () => void;
   onRatingsChange: (ratings: Record<string, GoogleRatingMatch>) => void;
 }
 
-type AdminAction = '' | 'login' | 'snapshot' | 'delta' | 'missing';
+type AdminAction = '' | 'login' | 'snapshot' | 'delta' | 'missing' | 'pluxeeStatus';
 
-export default function AdminPanel({ facilities, ratings, onClose, onRatingsChange }: AdminPanelProps) {
+export default function AdminPanel({ provider, facilities, ratings, onClose, onRatingsChange }: AdminPanelProps) {
   const { formatNumber } = useI18n();
   const [credentials, setCredentials] = useState<AdminCredentials>({ username: '', password: '' });
   const [activeCredentials, setActiveCredentials] = useState<AdminCredentials | null>(null);
   const [status, setStatus] = useState<AdminRatingsStatus | null>(null);
+  const [pluxeeStatus, setPluxeeStatus] = useState<AdminPluxeeStatus | null>(null);
   const [action, setAction] = useState<AdminAction>('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const isPluxee = provider === 'pluxee';
   const stats = useMemo(() => {
-    const values = Object.values(ratings);
-    const matched = values.filter((rating) => rating.matchStatus === 'matched').length;
-    const withHours = values.filter(hasHours).length;
-    const deltaFacilities = facilities.filter((facility) => needsDeltaRefresh(facility, ratings[facility.id]));
-    const missingFacilities = facilities.filter((facility) => needsMissingRefresh(ratings[facility.id]));
-    return {
-      cached: values.length,
-      matched,
-      withHours,
-      deltaFacilities,
-      missingFacilities,
-    };
+    return buildMultiSportAdminStats(facilities, ratings);
   }, [facilities, ratings]);
+  const pluxeeStats = useMemo(() => buildPluxeeAdminStats(facilities), [facilities]);
 
   const isBusy = Boolean(action);
   const isLoggedIn = Boolean(activeCredentials);
 
   const loadStatus = async (nextCredentials = activeCredentials) => {
     if (!nextCredentials) return;
-    const freshStatus = await getAdminRatingsStatus(nextCredentials);
-    setStatus(freshStatus);
+    if (isPluxee) {
+      const freshStatus = await getAdminPluxeeStatus(nextCredentials);
+      setPluxeeStatus(freshStatus);
+      return;
+    }
+    setStatus(await getAdminRatingsStatus(nextCredentials));
   };
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -60,12 +63,30 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
     setError(null);
     setMessage(null);
     try {
-      const freshStatus = await getAdminRatingsStatus(credentials);
+      const freshStatus = isPluxee
+        ? await getAdminPluxeeStatus(credentials)
+        : await getAdminRatingsStatus(credentials);
       setActiveCredentials(credentials);
-      setStatus(freshStatus);
+      if (isPluxee) setPluxeeStatus(freshStatus as AdminPluxeeStatus);
+      else setStatus(freshStatus as AdminRatingsStatus);
       setMessage('Admin oturumu açıldı.');
     } catch {
       setError('Admin girişi başarısız. Kullanıcı adı veya şifre hatalı olabilir.');
+    } finally {
+      setAction('');
+    }
+  };
+
+  const refreshPluxeeStatus = async () => {
+    if (!activeCredentials) return;
+    setAction('pluxeeStatus');
+    setError(null);
+    setMessage(null);
+    try {
+      await loadStatus(activeCredentials);
+      setMessage('Pluxee konum cache durumu yenilendi.');
+    } catch {
+      setError('Pluxee konum durumu okunamadı.');
     } finally {
       setAction('');
     }
@@ -133,8 +154,10 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-[var(--accent-text)]" />
               <div>
-                <h2 className="text-lg font-black">Admin cache kontrolü</h2>
-                <p className="text-xs font-semibold text-[var(--text-tertiary)]">Google sadece bu panelden kontrollü çalışır.</p>
+                <h2 className="text-lg font-black">{isPluxee ? 'Pluxee admin kontrolü' : 'Admin cache kontrolü'}</h2>
+                <p className="text-xs font-semibold text-[var(--text-tertiary)]">
+                  {isPluxee ? 'Place ID ve canlı konum cache maliyet kontrollüdür.' : 'Google sadece bu panelden kontrollü çalışır.'}
+                </p>
               </div>
             </div>
             <button
@@ -176,6 +199,43 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
               </button>
             </form>
           ) : (
+            isPluxee ? (
+              <>
+                <section className="grid grid-cols-2 gap-2">
+                  <AdminMetric label="Pluxee kayıt" value={formatNumber(pluxeeStats.total)} />
+                  <AdminMetric label="Pluxee konum" value={formatNumber(pluxeeStats.nativeLocationCount)} />
+                  <AdminMetric label="Place ID" value={formatNumber(pluxeeStats.googlePlaceIdCount)} />
+                  <AdminMetric label="Canlı cache" value={formatNumber(pluxeeStats.googleResolvedCount)} />
+                  <AdminMetric label="İlçe tahmini" value={formatNumber(pluxeeStats.approximateLocationCount)} />
+                  <AdminMetric label="Konum bekliyor" value={formatNumber(pluxeeStats.googlePendingCount)} />
+                  <AdminMetric label="Konumsuz" value={formatNumber(pluxeeStats.missingLocationCount)} />
+                </section>
+
+                <section className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface-raised)] p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-black">
+                    <Database className="h-4 w-4" />
+                    Pluxee Google konum bütçesi
+                  </div>
+                  <div className="space-y-2 text-xs font-bold text-[var(--text-secondary)]">
+                    <Row label="Bugünkü Place Details" value={pluxeeStatus ? `${formatNumber(pluxeeStatus.usage.daily.count)} / ${formatNumber(pluxeeStatus.usage.daily.limit)}` : '-'} />
+                    <Row label="Bu ay Place Details" value={pluxeeStatus ? `${formatNumber(pluxeeStatus.usage.monthly.count)} / ${formatNumber(pluxeeStatus.usage.monthly.limit)}` : '-'} />
+                    <Row label="Firestore konum cache" value={pluxeeStatus ? formatNumber(pluxeeStatus.cache.locationCount) : '-'} />
+                    <Row label="Batch limiti" value={pluxeeStatus ? formatNumber(pluxeeStatus.limits.batch) : '50'} />
+                    <Row label="Cache süresi" value={pluxeeStatus ? `${formatNumber(pluxeeStatus.limits.cacheDays)} gün` : '30 gün'} />
+                  </div>
+                </section>
+
+                <section className="space-y-2">
+                  <button type="button" disabled={isBusy} onClick={refreshPluxeeStatus} className="action-button primary w-full disabled:opacity-60">
+                    {action === 'pluxeeStatus' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Pluxee durumu yenile
+                  </button>
+                  <p className="text-[11px] font-semibold leading-5 text-[var(--text-tertiary)]">
+                    Pluxee marker konumları kullanıcı görünür listesinde 50'lik batch ile alınır. Google lat/lng statik JSON'a yazılmaz; Firestore cache en fazla 30 gün tutulur.
+                  </p>
+                </section>
+              </>
+            ) : (
             <>
               <section className="grid grid-cols-2 gap-2">
                 <AdminMetric label="Tesis" value={formatNumber(facilities.length)} />
@@ -217,6 +277,7 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
                 </p>
               </section>
             </>
+            )
           )}
 
           {(message || error) && (
@@ -229,21 +290,6 @@ export default function AdminPanel({ facilities, ratings, onClose, onRatingsChan
       </aside>
     </div>
   );
-}
-
-function needsDeltaRefresh(facility: BenefitFacility, rating?: GoogleRatingMatch): boolean {
-  if (!rating) return true;
-  return Boolean(rating.facilityFingerprint && rating.facilityFingerprint !== getFacilityFingerprint(facility));
-}
-
-function needsMissingRefresh(rating?: GoogleRatingMatch): boolean {
-  if (!rating) return true;
-  if (rating.matchStatus === 'ambiguous' || rating.matchStatus === 'not_found' || rating.matchStatus === 'stale') return true;
-  return rating.matchStatus === 'matched' && !hasHours(rating);
-}
-
-function hasHours(rating: GoogleRatingMatch): boolean {
-  return Boolean(rating.openingHours || rating.currentOpeningHours || rating.regularOpeningHours);
 }
 
 function formatDate(value?: string): string {

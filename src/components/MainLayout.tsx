@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { List, MapIcon, Maximize, Minimize, Moon, Sun } from 'lucide-react';
 import AdminPanel from './AdminPanel';
@@ -26,6 +26,7 @@ import {
 import { loadFacilityChanges } from '../lib/facilityChanges';
 import {
   getAllRatings,
+  getPluxeeLocations,
   getRatingsSnapshot,
   RATINGS_API_AVAILABLE,
 } from '../lib/ratingsApi';
@@ -74,6 +75,7 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [ratings, setRatings] = useState<Record<string, GoogleRatingMatch>>({});
   const [userStates, setUserStates] = useState<Record<string, UserFacilityState>>(() => loadUserFacilityStates());
   const [facilityChanges, setFacilityChanges] = useState<FacilityChangeSummary | null>(null);
+  const [pluxeeLocations, setPluxeeLocations] = useState<Record<string, NonNullable<BenefitFacility['googleLocation']>>>({});
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -92,7 +94,18 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [visibleListLimit, setVisibleListLimit] = useState(INITIAL_LIST_RESULTS);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
-  const facilities = provider === 'pluxee' ? pluxeeFacilities : multiSportFacilities;
+  const requestedPluxeeLocationPlaceIds = useRef(new Set<string>());
+  const hydratedPluxeeFacilities = useMemo(
+    () => pluxeeFacilities.map((facility) => {
+      const placeId = facility.googleMatch?.googlePlaceId;
+      const googleLocation = placeId ? pluxeeLocations[placeId] : undefined;
+      return googleLocation
+        ? { ...facility, googleLocation, locationStatus: 'google_resolved' as const }
+        : facility;
+    }),
+    [pluxeeFacilities, pluxeeLocations],
+  );
+  const facilities = provider === 'pluxee' ? hydratedPluxeeFacilities : multiSportFacilities;
   const filters = filtersByProvider[provider];
   const isLoading = provider === 'pluxee' ? isPluxeeLoading : isMultiSportLoading;
   const activeRatingCacheLoading = provider === 'multisport' ? isRatingCacheLoading : false;
@@ -231,6 +244,29 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
     () => filteredResults.slice(0, visibleListLimit),
     [filteredResults, visibleListLimit],
   );
+
+  useEffect(() => {
+    if (provider !== 'pluxee' || !RATINGS_API_AVAILABLE) return;
+    const placeIds = visibleListResults
+      .map((result) => result.facility)
+      .filter((facility) => !hasNativeOrGooglePosition(facility))
+      .map((facility) => facility.googleMatch?.googlePlaceId)
+      .filter((placeId): placeId is string => Boolean(placeId))
+      .filter((placeId) => !pluxeeLocations[placeId] && !requestedPluxeeLocationPlaceIds.current.has(placeId))
+      .slice(0, 50);
+
+    if (placeIds.length === 0) return;
+    placeIds.forEach((placeId) => requestedPluxeeLocationPlaceIds.current.add(placeId));
+    getPluxeeLocations(placeIds)
+      .then((payload) => {
+        if (payload.locations.length === 0) return;
+        setPluxeeLocations((current) => ({
+          ...current,
+          ...Object.fromEntries(payload.locations.map((location) => [location.placeId, location])),
+        }));
+      })
+      .catch((cause) => console.warn(cause));
+  }, [pluxeeLocations, provider, visibleListResults]);
 
   const stats = useMemo(() => {
     const matched = filteredResults.filter((result) => result.rating?.matchStatus === 'matched').length;
@@ -447,7 +483,8 @@ export default function MainLayout({ mapsAvailable }: { mapsAvailable: boolean }
 
       {isAdminPanelOpen && (
         <AdminPanel
-          facilities={multiSportFacilities}
+          provider={provider}
+          facilities={facilities}
           ratings={ratings}
           onClose={() => setIsAdminPanelOpen(false)}
           onRatingsChange={(freshRatings) => setRatings((current) => ({ ...current, ...freshRatings }))}
@@ -483,6 +520,11 @@ function mergeFacilitiesById(current: BenefitFacility[], incoming: BenefitFacili
     });
   });
   return Array.from(byId.values());
+}
+
+function hasNativeOrGooglePosition(facility: BenefitFacility): boolean {
+  return (Number.isFinite(facility.lat) && Number.isFinite(facility.lng))
+    || (Number.isFinite(facility.googleLocation?.lat) && Number.isFinite(facility.googleLocation?.lng));
 }
 
 function MapKeyFallback() {

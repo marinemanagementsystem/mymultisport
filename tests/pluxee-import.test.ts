@@ -5,6 +5,7 @@ import {
   normalizePluxeeMerchant,
   parseCoordinatesFromDetailHtml,
   parsePluxeeDetailHtml,
+  resolvePluxeeLocationTargets,
 } from '../scripts/lib/pluxee-import.mjs';
 
 const detailHtml = `
@@ -59,7 +60,7 @@ test('normalizes a Pluxee merchant with deterministic id and detail fields', () 
   assert.equal(merchant.isOpenNow, true);
 });
 
-test('builds a deduped snapshot and excludes unmapped merchants from map data', () => {
+test('builds a deduped snapshot and keeps unmapped merchants as map candidates', () => {
   const first = normalizePluxeeMerchant({
     serviceId: '3',
     sourcePage: 1,
@@ -113,12 +114,23 @@ test('builds a deduped snapshot and excludes unmapped merchants from map data', 
     generatedAt: '2026-05-28T00:00:00.000Z',
   });
 
-  assert.equal(snapshot.index.length, 1);
+  assert.equal(snapshot.index.length, 2);
   assert.equal(snapshot.unmapped.length, 1);
   assert.deepEqual(snapshot.index[0].services, ['3', '4']);
   assert.equal(snapshot.index[0].pluxeePlus, true);
   assert.equal(snapshot.index[0].isOpenNow, true);
   assert.equal(snapshot.manifest.totalMapped, 1);
   assert.equal(snapshot.manifest.totalUnmapped, 1);
+  assert.equal(snapshot.manifest.totalRecords, 2);
   assert.equal(snapshot.cityShards.istanbul.length, 1);
+  assert.equal(snapshot.cityShards.adana.length, 1);
+  assert.equal(snapshot.index[1].locationStatus, 'google_pending');
+});
+
+test('resolves Pluxee city aliases to location codes for regional imports', () => {
+  assert.deepEqual(resolvePluxeeLocationTargets(['edirne', 'Çanakkale', 'tekirdag']), [
+    { code: '73', label: 'Edirne', city: 'Edirne' },
+    { code: '20', label: 'Çanakkale', city: 'Çanakkale' },
+    { code: '59', label: 'Tekirdağ', city: 'Tekirdağ' },
+  ]);
 });

@@ -22,6 +22,16 @@ npm run dev
 Tesis datası `npm run sync:facilities` ile `https://benefitsystems.com.tr/facilities-tr.json` kaynağından yenilenir. `npm run build` öncesinde otomatik çalışır.
 Sync işlemi ayrıca `public/data/facility-changes.json` dosyasına son anlamlı tesis değişim özetini yazar; uygulamadaki "Yenilikler" paneli bu statik dosyadan beslenir.
 
+Pluxee datası statik provider snapshot olarak tutulur. Liste import'u koordinatsız kayıtları da korur; Google eşleştirme kalıcı olarak sadece `place_id` ve match metadata yazar. Google'dan gelen konumlar statik JSON'a yazılmaz, `/api/pluxee/locations` üzerinden 30 günlük Firestore cache ile alınır.
+
+```bash
+npm run sync:pluxee -- --services=3,4,9 --cities=edirne,canakkale,tekirdag --details=0
+npm run match:pluxee:google -- --ids-only
+```
+
+Batı Marmara kapsamı için Pluxee şehir kodları `73=Edirne`, `20=Çanakkale`, `59=Tekirdağ` olarak import edilir. Aynı kapsam doğrudan `--locations=73,20,59` veya `--location-group=trakya` ile de çalıştırılabilir.
+Google `SearchTextRequest` günlük kotası dolduğunda Pluxee kayıtları listede kalır ve haritada ilçe merkezi tahmini marker ile görünür; exact `place_id` eşleşmesi kota açıldığında `npm run match:pluxee:google -- --ids-only --limit=50` gibi küçük batch'lerle devam ettirilir.
+
 ## İlk Ürün Geliştirmeleri
 
 - Görsel sistem premium, sade ve operasyonel bir tesis keşif arayüzüne taşındı.
@@ -54,8 +64,10 @@ Functions API:
 - `GET /api/health`
 - `GET /api/ratings?ids=...`
 - `GET /api/ratings/snapshot`
+- `POST /api/pluxee/locations`
 - `POST /api/ratings/enrich` (admin auth gerekir)
 - `GET /api/admin/ratings/status` (admin auth gerekir)
+- `GET /api/admin/pluxee/status` (admin auth gerekir)
 - `POST /api/admin/ratings/enrich` (admin auth gerekir)
 - `POST /api/admin/ratings/snapshot/rebuild` (admin auth gerekir)
 
@@ -69,7 +81,7 @@ firebase functions:secrets:set RATINGS_ADMIN_USERNAME --project mymultisport-bc9
 firebase functions:secrets:set RATINGS_ADMIN_PASSWORD --project mymultisport-bc9c5
 ```
 
-Varsayılan maliyet koruma limitleri Functions içinde `DAILY_ENRICH_LIMIT=50`, `MONTHLY_ENRICH_LIMIT=900`, `MAX_ENRICH_BATCH=50` olarak uygulanır. Google Cloud tarafında da Places/Text Search günlük kotası 50, Maps JavaScript günlük kotası 300 olacak şekilde ayrıca sınırlandırılmalıdır.
+Varsayılan maliyet koruma limitleri Functions içinde `DAILY_ENRICH_LIMIT=50`, `MONTHLY_ENRICH_LIMIT=900`, `MAX_ENRICH_BATCH=50`, `PLUXEE_LOCATION_DAILY_LIMIT=500` ve `PLUXEE_LOCATION_MONTHLY_LIMIT=10000` olarak uygulanır. Google Cloud tarafında da Maps JavaScript günlük kotası 300 olacak şekilde ayrıca sınırlandırılmalıdır. Pluxee admin modu bu kullanım sayaçlarını `/api/admin/pluxee/status` üzerinden gösterir. Pluxee Google ID match script'i ID-only Text Search kullanır; Pluxee canlı marker konumu ise 30 günlük cache'li Place Details location çağrısından gelir.
 
 Deploy:
 

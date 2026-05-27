@@ -1,7 +1,9 @@
 import type {
   AdminRatingsStatus,
+  AdminPluxeeStatus,
   BenefitFacility,
   GoogleRatingMatch,
+  PluxeeLocationsResponse,
   RatingsSnapshotResponse,
 } from '../types';
 import type { TranslationKey } from './i18n';
@@ -113,6 +115,32 @@ export async function getRatingsSnapshot(
   return response.json();
 }
 
+export async function getPluxeeLocations(placeIds: string[]): Promise<PluxeeLocationsResponse> {
+  if (placeIds.length === 0) {
+    return { locations: [], missingPlaceIds: [], pendingQuota: false, cacheHitCount: 0, googleLookupCount: 0 };
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/pluxee/locations`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ placeIds: Array.from(new Set(placeIds)).slice(0, 50) }),
+  });
+
+  if (!response.ok) {
+    throw new RatingsApiError(
+      `Pluxee locations could not be read (${response.status})`,
+      response.status,
+      undefined,
+      'errors.ratingsCacheFailedStatus',
+    );
+  }
+
+  return response.json();
+}
+
 export interface AdminCredentials {
   username: string;
   password: string;
@@ -128,6 +156,16 @@ export async function getAdminRatingsStatus(credentials: AdminCredentials): Prom
     },
   });
   return parseAdminResponse(response, 'Admin status could not be read');
+}
+
+export async function getAdminPluxeeStatus(credentials: AdminCredentials): Promise<AdminPluxeeStatus> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/pluxee/status`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: basicAuth(credentials),
+    },
+  });
+  return parseAdminResponse(response, 'Pluxee admin status could not be read');
 }
 
 export async function rebuildRatingSnapshot(

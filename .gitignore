@@ -16,6 +16,7 @@ android/.gradle/
 !.env.example
 .DS_Store
 .claude/
+.cache/
 .vscode/
 android/local.properties
 

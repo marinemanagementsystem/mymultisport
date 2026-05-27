@@ -191,18 +191,16 @@ export default function Sidebar({
             <div className="rounded-full border border-[var(--accent-soft)] bg-[var(--accent-muted)] px-3 py-1 text-xs font-black text-[var(--accent-text)]">
               {formatCount(stats.total, 'facility')}
             </div>
-            {!isPluxee && (
-              <button
-                type="button"
-                onClick={onOpenAdmin}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] px-3 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-                aria-label="Admin"
-                title="Admin"
-              >
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Admin
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-raised)] px-3 text-[11px] font-black text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              aria-label="Admin"
+              title="Admin"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Admin
+            </button>
           </div>
         </div>
 

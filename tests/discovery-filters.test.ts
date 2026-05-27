@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { filterAndSortFacilities } from '../src/lib/facilities.ts';
+import {
+  buildFacilityResults,
+  filterAndSortFacilities,
+  getFacilityPosition,
+  isUsableFacility,
+} from '../src/lib/facilities.ts';
 
 function result(overrides: Record<string, unknown>) {
   return {
@@ -65,4 +70,57 @@ test('filters Pluxee places by service, Pluxee Plus, open now, and service mode'
   } as any);
 
   assert.deepEqual(filtered.map((item) => item.facility.id), ['pluxee:1']);
+});
+
+test('keeps Pluxee records without native coordinates and uses live Google location when present', () => {
+  const withoutNativeCoordinates = {
+    ...result({
+      id: 'pluxee:google-only',
+      lat: undefined,
+      lng: undefined,
+      googleLocation: {
+        placeId: 'places/google-only',
+        lat: 41.01,
+        lng: 29.02,
+        fetchedAt: '2026-05-28T00:00:00.000Z',
+        expiresAt: '2026-06-27T00:00:00.000Z',
+        source: 'google_places_details',
+      },
+    }).facility,
+  };
+  const waitingForLocation = {
+    ...result({
+      id: 'pluxee:waiting',
+      lat: undefined,
+      lng: undefined,
+      locationStatus: 'google_pending',
+    }).facility,
+  };
+
+  assert.equal(isUsableFacility(waitingForLocation as any), true);
+  assert.deepEqual(getFacilityPosition(withoutNativeCoordinates as any), {
+    lat: 41.01,
+    lng: 29.02,
+    source: 'google',
+  });
+  const [googleOnly] = buildFacilityResults([withoutNativeCoordinates] as any, {}, { lat: 41, lng: 29 });
+  assert.equal(Math.round((googleOnly.distanceKm || 0) * 10) / 10, 2);
+});
+
+test('uses Batı Marmara district center fallback for unmapped Pluxee records', () => {
+  const unmappedRegionalPlace = {
+    ...result({
+      id: 'pluxee:tekirdag',
+      lat: undefined,
+      lng: undefined,
+      city: 'Tekirdağ',
+      cityDistrict: 'Çorlu',
+      locationStatus: 'google_pending',
+    }).facility,
+  };
+
+  const position = getFacilityPosition(unmappedRegionalPlace as any);
+  assert.equal(position?.source, 'approximate');
+  assert.equal(Math.round((position?.lat || 0) * 1000) / 1000, 41.159);
+  assert.equal(Math.round((position?.lng || 0) * 1000) / 1000, 27.801);
 });
